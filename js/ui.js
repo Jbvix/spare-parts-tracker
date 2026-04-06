@@ -196,6 +196,32 @@ function createInTransitPanel() {
     return panel;
 }
 
+// Garante que o painel de trânsito do Chefe de Máquinas existe sempre que necessário
+function ensureInTransitForBordoPanel() {
+    let panel = document.getElementById('inTransitForBordo');
+    if (!panel) {
+        // Cria dinamicamente se não existir
+        const panelsGrid = document.getElementById('panelsGrid');
+        if (panelsGrid) {
+            const transitPanel = document.createElement('div');
+            transitPanel.className = 'panel';
+            transitPanel.innerHTML = `
+                <div class="panel-header" style="border-bottom-color: #ffa502;">
+                    <span class="panel-icon">${icon('truck')}</span>
+                    <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>
+                </div>
+                <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
+                    Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.
+                </p>
+                <div id="inTransitForBordo" style="min-height: 40px;"></div>
+            `;
+            panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling); // após scanner
+            panel = transitPanel.querySelector('#inTransitForBordo');
+        }
+    }
+    return panel;
+}
+
 // ===== INSTRUÇÕES POR PAPEL =====
 function showRoleInstructions() {
     if (!state.currentUser) return;
@@ -336,8 +362,10 @@ function placeSpareElement(spareDiv) {
     if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
         target = document.getElementById('sparesList');
     } else if (stateName === 'EM_TRANSITO') {
-        // Sempre tenta painel de trânsito do bordo se existir
-        target = document.getElementById('transportInTransit') || document.getElementById('inTransitForBordo');
+        target = document.getElementById('transportInTransit');
+        if (!target) {
+            target = ensureInTransitForBordoPanel();
+        }
     } else if (stateName === 'ENTREGUE_BORDO') {
         target = document.getElementById('bordoList');
     } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
@@ -501,78 +529,33 @@ function updateComplianceGrid() {
 // ===== INICIALIZAÇÃO DE PEÇAS =====
 function initializeSpares() {
     const savedSpares = localStorage.getItem('sparesData');
+    let empty = true;
     if (savedSpares) {
         try {
             state.sparesData = JSON.parse(savedSpares);
+            if (Object.keys(state.sparesData).length > 0) empty = false;
             for (let code in state.sparesData) {
                 recreateSpareElement(state.sparesData[code]);
             }
             addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
         } catch (e) { console.error('Erro ao carregar peças:', e); }
     }
-
-    const savedEquipment = localStorage.getItem('equipmentState');
-    if (savedEquipment) {
-        try {
-            state.equipmentState = JSON.parse(savedEquipment);
-            for (let equipName in state.equipmentState) {
-                restoreInstalledPart(equipName, state.equipmentState[equipName]);
-            }
-            addLog(`${icon('wrench')} ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
-        } catch (e) { console.error('Erro ao carregar equipamentos:', e); }
-    }
-
-    const savedDisposals = localStorage.getItem('disposalRecords');
-    if (savedDisposals) {
-        try {
-            state.disposalRecords = JSON.parse(savedDisposals);
-            addLog(`${icon('trash')} ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
-        } catch (e) { console.error('Erro ao carregar descartes:', e); }
-    }
-
-    const savedQuarantine = localStorage.getItem('quarantineItems');
-    if (savedQuarantine) {
-        try {
-            state.quarantineItems = JSON.parse(savedQuarantine);
-            state.quarantineItems.forEach(item => {
-                const element = document.getElementById(item.code);
-                if (element) {
-                    const targetDiv = document.getElementById('quarantineList');
-                    if (targetDiv) {
-                        targetDiv.appendChild(element);
-                        element.dataset.state = 'QUARENTENA';
-                        element.classList.add('removed');
-                        updateSpareStatus(element);
-                    }
-                }
-            });
-            addLog(`${icon('alertTriangle')} ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
-        } catch (e) { console.error('Erro ao carregar quarentena:', e); }
-    }
-
-    const savedNonCompliance = localStorage.getItem('nonComplianceList');
-    if (savedNonCompliance) {
-        try {
-            state.nonComplianceList = JSON.parse(savedNonCompliance);
-            if (state.nonComplianceList.length > 0) {
-                addLog(`${icon('alertTriangle')} ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
-            }
-        } catch (e) { console.error('Erro ao carregar não-conformidades:', e); }
-    }
-
-    if (Object.keys(state.sparesData).length === 0) {
+    if (empty) {
         const exampleSpares = [
-            { name: 'Filtro de Óleo', code: 'FO-2025-001', icon: 'droplet' },
-            { name: 'Filtro de Ar', code: 'FA-2025-002', icon: 'wind' },
-            { name: 'Rolamento SKF', code: 'RL-2025-003', icon: 'cog' }
+            { name: 'Filtro de Óleo', code: 'FO-2025-001', icon: 'droplet', currentState: 'EM_TRANSITO', scanCount: 1 },
+            { name: 'Filtro de Ar', code: 'FA-2025-002', icon: 'wind', currentState: 'EM_TRANSITO', scanCount: 1 }
         ];
-        exampleSpares.forEach(spare => createSpareElement(spare.name, spare.code, spare.icon));
+        exampleSpares.forEach(spare => {
+            state.sparesData[spare.code] = spare;
+            recreateSpareElement(spare);
+        });
+        localStorage.setItem('sparesData', JSON.stringify(state.sparesData));
+        addLog(`${icon('refresh')} Peças de exemplo criadas para teste visual`, 'info');
     }
-
     updateDashboard();
 }
 
-// Garante que o painel de trânsito está disponível antes de popular as peças
+// Garante que o painel de trânsito do Chefe de Máquinas é criado dinamicamente, igual ao fluxo da transportadora, e nunca falta no DOM
 const originalInitializeInterface = initializeInterface;
 initializeInterface = function() {
     const panelsGrid = document.getElementById('panelsGrid');
@@ -616,8 +599,10 @@ placeSpareElement = function(spareDiv) {
     if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
         target = document.getElementById('sparesList');
     } else if (stateName === 'EM_TRANSITO') {
-        // Sempre tenta painel de trânsito do bordo se existir
-        target = document.getElementById('transportInTransit') || document.getElementById('inTransitForBordo');
+        target = document.getElementById('transportInTransit');
+        if (!target) {
+            target = ensureInTransitForBordoPanel();
+        }
     } else if (stateName === 'ENTREGUE_BORDO') {
         target = document.getElementById('bordoList');
     } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
