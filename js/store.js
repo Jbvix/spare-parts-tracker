@@ -1,0 +1,136 @@
+/**
+ * SPARES-CHAIN v6.2 — Store (Estado Global e Persistência)
+ * Fonte única de verdade para todo o estado da aplicação.
+ */
+
+import { addLog } from './utils.js';
+
+// ===== ESTADO GLOBAL =====
+export const state = {
+    spareCounter: parseInt(localStorage.getItem('spareCounter')) || 1,
+    disposalDocCounter: parseInt(localStorage.getItem('disposalDocCounter')) || 1,
+    blockchainLog: [],
+    currentUser: null,
+    sparesData: {},
+    currentContextSpare: null,
+    nonComplianceList: [],
+    equipmentState: {},
+    disposalRecords: [],
+    quarantineItems: []
+};
+
+// ===== PERSISTÊNCIA =====
+export function saveAll() {
+    try {
+        localStorage.setItem('sparesData', JSON.stringify(state.sparesData));
+        localStorage.setItem('equipmentState', JSON.stringify(state.equipmentState));
+        localStorage.setItem('disposalRecords', JSON.stringify(state.disposalRecords));
+        localStorage.setItem('quarantineItems', JSON.stringify(state.quarantineItems));
+        localStorage.setItem('nonComplianceList', JSON.stringify(state.nonComplianceList));
+        localStorage.setItem('spareCounter', state.spareCounter);
+        localStorage.setItem('disposalDocCounter', state.disposalDocCounter);
+        console.log('💾 Dados salvos:', {
+            peças: Object.keys(state.sparesData).length,
+            equipamentos: Object.keys(state.equipmentState).length,
+            descartes: state.disposalRecords.length,
+            quarentena: state.quarantineItems.length,
+            naoConformidades: state.nonComplianceList.length
+        });
+    } catch (e) {
+        console.error('Erro ao salvar:', e);
+    }
+}
+
+export function loadAll() {
+    const saved = key => localStorage.getItem(key);
+
+    // Peças
+    const sparesRaw = saved('sparesData');
+    if (sparesRaw) {
+        try {
+            state.sparesData = JSON.parse(sparesRaw);
+            addLog(`🔄 ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
+        } catch (e) { console.error('Erro ao carregar peças:', e); }
+    }
+
+    // Equipamentos
+    const equipRaw = saved('equipmentState');
+    if (equipRaw) {
+        try {
+            state.equipmentState = JSON.parse(equipRaw);
+            addLog(`🔧 ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
+        } catch (e) { console.error('Erro ao carregar equipamentos:', e); }
+    }
+
+    // Descartes
+    const disposalRaw = saved('disposalRecords');
+    if (disposalRaw) {
+        try {
+            state.disposalRecords = JSON.parse(disposalRaw);
+            addLog(`🗑️ ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
+        } catch (e) { console.error('Erro ao carregar descartes:', e); }
+    }
+
+    // Quarentena
+    const quarantineRaw = saved('quarantineItems');
+    if (quarantineRaw) {
+        try {
+            state.quarantineItems = JSON.parse(quarantineRaw);
+            addLog(`⚠️ ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
+        } catch (e) { console.error('Erro ao carregar quarentena:', e); }
+    }
+
+    // Não-conformidades
+    const ncRaw = saved('nonComplianceList');
+    if (ncRaw) {
+        try {
+            state.nonComplianceList = JSON.parse(ncRaw);
+            if (state.nonComplianceList.length > 0) {
+                addLog(`⚠️ ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
+            }
+        } catch (e) { console.error('Erro ao carregar não-conformidades:', e); }
+    }
+}
+
+// ===== GESTÃO DE EVENTOS =====
+export function addSpareEvent(code, type, data) {
+    if (!state.sparesData[code]) {
+        state.sparesData[code] = {
+            code,
+            history: [],
+            currentState: type,
+            scanCount: 0,
+            nonCompliantOps: []
+        };
+    }
+
+    state.sparesData[code].history.push({
+        type,
+        timestamp: new Date().toISOString(),
+        data
+    });
+    state.sparesData[code].currentState = type;
+
+    saveAll();
+}
+
+export function generateDisposalDoc() {
+    const year = new Date().getFullYear();
+    const docNumber = `DD-${year}-${String(state.disposalDocCounter).padStart(4, '0')}`;
+    state.disposalDocCounter++;
+    localStorage.setItem('disposalDocCounter', state.disposalDocCounter);
+    return docNumber;
+}
+
+export function clearAll() {
+    localStorage.clear();
+    state.spareCounter = 1;
+    state.disposalDocCounter = 1;
+    state.blockchainLog = [];
+    state.sparesData = {};
+    state.currentContextSpare = null;
+    state.nonComplianceList = [];
+    state.equipmentState = {};
+    state.disposalRecords = [];
+    state.quarantineItems = [];
+}
