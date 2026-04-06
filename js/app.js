@@ -206,6 +206,10 @@ function switchRole(newRole) {
     showRoleInstructions();
     updateDashboard();
     addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
+    // Repopula painel de trânsito se Chefe de Máquinas
+    if (newRole === 'CHEFE_MAQ') {
+        setTimeout(repopulateInTransitForBordo, 100);
+    }
 }
 
 // Carrega todos os dados do localStorage
@@ -216,4 +220,21 @@ function loadAll() {
     document.getElementById('userRole').value = user.role;
     document.getElementById('userLocation').value = user.location || '';
     login();
+}
+
+// Força repopulação das peças em trânsito ao trocar para Chefe de Máquinas
+function repopulateInTransitForBordo() {
+    if (!state.sparesData) return;
+    const inTransitPanel = document.getElementById('inTransitForBordo');
+    if (!inTransitPanel) {
+        console.warn('Painel Peças em Trânsito não encontrado!');
+        return;
+    }
+    // Limpa painel
+    inTransitPanel.innerHTML = '';
+    Object.values(state.sparesData).forEach(spare => {
+        if (spare.currentState === 'EM_TRANSITO') {
+            recreateSpareElement(spare);
+        }
+    });
 }
