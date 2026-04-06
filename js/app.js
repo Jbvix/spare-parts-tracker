@@ -207,3 +207,13 @@ function switchRole(newRole) {
     updateDashboard();
     addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
 }
+
+// Carrega todos os dados do localStorage
+function loadAll() {
+    const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser'));
+    if (!user) return;
+    document.getElementById('userName').value = user.name;
+    document.getElementById('userRole').value = user.role;
+    document.getElementById('userLocation').value = user.location || '';
+    login();
+}
