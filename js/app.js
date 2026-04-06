@@ -1,33 +1,7 @@
 /**
- * SPARES-CHAIN v6.2 — App (Entry Point / Bootstrap)
- * Importa todos os módulos e expõe funções ao escopo global
- * para uso em event handlers inline no HTML.
+ * SPARES-CHAIN v6.2 — App (Bootstrap / Inicialização)
+ * Carregado após: utils.js, store.js, ui.js, handlers.js, compliance.js
  */
-
-import { escapeHtml, getRoleName, addLog } from './utils.js';
-import { state, saveAll, clearAll } from './store.js';
-import {
-    setHandlers,
-    createScannerPanel, createAlmoxPanel,
-    createTransportadoraCollectPanel, createTransportadoraDeliverPanel,
-    createEquipmentPanel, createShelfPanel, createQuarantinePanel,
-    showRoleInstructions, initializeSpares,
-    addSpare, updateDashboard
-} from './ui.js';
-import {
-    drag, allowDrop, drop,
-    showContextMenu, closeContextMenu,
-    handleRemoval
-} from './handlers.js';
-import {
-    showComplianceDetails, showComplianceAnalysis,
-    closeComplianceModal, showHistory, closeHistoryModal,
-    showDisposalRecords, closeDisposalModal,
-    showDisposalTransport, closeWelcomeModal, checkFirstVisit
-} from './compliance.js';
-
-// Registrar callbacks de drag/contextmenu no módulo UI
-setHandlers(drag, showContextMenu);
 
 // ===== SISTEMA DE LOGIN =====
 function login() {
@@ -207,20 +181,3 @@ document.addEventListener('dragover', function (e) {
         }
     });
 });
-
-// ===== EXPOR FUNÇÕES AO ESCOPO GLOBAL =====
-// Necessário para inline handlers (onclick, ondrop, ondragover) no HTML
-window.login = login;
-window.logout = logout;
-window.confirmReset = confirmReset;
-window.drop = drop;
-window.allowDrop = allowDrop;
-window.addSpare = addSpare;
-window.showComplianceDetails = showComplianceDetails;
-window.showComplianceAnalysis = showComplianceAnalysis;
-window.closeComplianceModal = closeComplianceModal;
-window.closeHistoryModal = closeHistoryModal;
-window.showDisposalRecords = showDisposalRecords;
-window.closeDisposalModal = closeDisposalModal;
-window.showDisposalTransport = showDisposalTransport;
-window.closeWelcomeModal = closeWelcomeModal;

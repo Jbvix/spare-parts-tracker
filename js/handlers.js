@@ -2,22 +2,18 @@
  * SPARES-CHAIN v6.2 — Handlers (Drag & Drop, Ações, Menu de Contexto)
  */
 
-import { escapeHtml, generateHash, addLog } from './utils.js';
-import { state, saveAll, addSpareEvent, generateDisposalDoc } from './store.js';
-import { updateSpareStatus, updateDashboard } from './ui.js';
-
 // ===== DRAG AND DROP =====
-export function drag(event) {
+function drag(event) {
     event.dataTransfer.setData('text', event.target.id);
     event.target.classList.add('dragging');
 }
 
-export function allowDrop(event) {
+function allowDrop(event) {
     event.preventDefault();
     event.currentTarget.classList.add('drag-over');
 }
 
-export function drop(event) {
+function drop(event) {
     event.preventDefault();
     event.currentTarget.classList.remove('drag-over');
 
@@ -50,7 +46,7 @@ export function drop(event) {
 }
 
 // ===== ESCANEAMENTO =====
-export function handleScan(element, name, code) {
+function handleScan(element, name, code) {
     const currentState = element.dataset.state;
     const scanCount = parseInt(element.dataset.scanCount || 0);
 
@@ -83,7 +79,7 @@ export function handleScan(element, name, code) {
 }
 
 // ===== TRANSPORTADORA - COLETA =====
-export function handleTransportCollect(element, name, code, currentState) {
+function handleTransportCollect(element, name, code, currentState) {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
         alert('⚠️ ACESSO NEGADO\n\nApenas TRANSPORTADORA pode coletar peças.');
         return;
@@ -131,7 +127,7 @@ export function handleTransportCollect(element, name, code, currentState) {
 }
 
 // ===== TRANSPORTADORA - ENTREGA =====
-export function handleTransportDeliver(element, name, code, currentState) {
+function handleTransportDeliver(element, name, code, currentState) {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
         alert('⚠️ ACESSO NEGADO\n\nApenas TRANSPORTADORA pode entregar peças.');
         return;
@@ -180,7 +176,7 @@ export function handleTransportDeliver(element, name, code, currentState) {
 }
 
 // ===== INSTALAÇÃO =====
-export function handleInstallation(element, equipSlot, name, code, currentState) {
+function handleInstallation(element, equipSlot, name, code, currentState) {
     const equipName = equipSlot.dataset.equip;
 
     if (currentState !== 'ESCANEADO' && currentState !== 'ENTREGUE_BORDO') {
@@ -241,7 +237,7 @@ export function handleInstallation(element, equipSlot, name, code, currentState)
 }
 
 // ===== REMOÇÃO =====
-export function handleRemoval(equipName, installedData) {
+function handleRemoval(equipName, installedData) {
     const code = installedData.code;
     const name = installedData.name;
 
@@ -375,7 +371,7 @@ export function handleRemoval(equipName, installedData) {
 }
 
 // ===== ARMAZENAMENTO EM PRATELEIRA =====
-export function handleShelfStorage(element, shelfSlot, name, code) {
+function handleShelfStorage(element, shelfSlot, name, code) {
     const shelfId = shelfSlot.dataset.shelf;
 
     const targetDiv = shelfSlot.querySelector('div:last-child');
@@ -396,7 +392,7 @@ export function handleShelfStorage(element, shelfSlot, name, code) {
 }
 
 // ===== QUARENTENA =====
-export function handleQuarantineDrop(element, name, code, currentState) {
+function handleQuarantineDrop(element, name, code, currentState) {
     if (currentState !== 'REMOVIDO') {
         alert('⚠️ ACESSO NEGADO\n\nApenas peças REMOVIDAS podem ir para a QUARENTENA.\n\nPrimeiro remova a peça do equipamento.');
         return;
@@ -428,7 +424,7 @@ export function handleQuarantineDrop(element, name, code, currentState) {
 }
 
 // ===== MENU DE CONTEXTO =====
-export function showContextMenu(event) {
+function showContextMenu(event) {
     event.preventDefault();
 
     const spare = event.currentTarget;
@@ -441,9 +437,8 @@ export function showContextMenu(event) {
     const code = spare.dataset.code;
     const name = spare.dataset.name;
 
-    // Importação dinâmica evita dependência circular
     const historyOption = createMenuOption('📜', 'Ver Histórico Completo', () => {
-        import('./compliance.js').then(m => m.showHistory(code));
+        showHistory(code);
         closeContextMenu();
     });
     menu.appendChild(historyOption);
@@ -492,6 +487,6 @@ function createMenuSeparator() {
     return separator;
 }
 
-export function closeContextMenu() {
+function closeContextMenu() {
     document.getElementById('contextMenu').classList.remove('active');
 }

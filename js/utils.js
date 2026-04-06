@@ -4,7 +4,7 @@
  */
 
 /** Escapa HTML para prevenir XSS */
-export function escapeHtml(str) {
+function escapeHtml(str) {
     if (typeof str !== 'string') return str;
     const div = document.createElement('div');
     div.appendChild(document.createTextNode(str));
@@ -12,7 +12,7 @@ export function escapeHtml(str) {
 }
 
 /** Hash simples para registros de blockchain simulada */
-export function generateHash(code, equip, hours) {
+function generateHash(code, equip, hours) {
     const str = `${code}-${equip}-${hours}-${Date.now()}`;
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -24,7 +24,7 @@ export function generateHash(code, equip, hours) {
 }
 
 /** Traduz código de papel para nome legível */
-export function getRoleName(role) {
+function getRoleName(role) {
     const roles = {
         'CHEFE_MAQ': 'Chefe de Máquinas',
         'ALMOX': 'Almoxarife',
@@ -35,7 +35,7 @@ export function getRoleName(role) {
 }
 
 /** Adiciona entrada no log de atividades (blockchain visual) */
-export function addLog(message, type = 'info') {
+function addLog(message, type = 'info') {
     const logDiv = document.createElement('div');
     logDiv.className = `log-entry ${type}`;
 

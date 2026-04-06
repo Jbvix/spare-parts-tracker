@@ -2,12 +2,8 @@
  * SPARES-CHAIN v6.2 — Compliance (Modais de Conformidade, Histórico, Descarte)
  */
 
-import { escapeHtml, generateHash, addLog } from './utils.js';
-import { state, saveAll, addSpareEvent, generateDisposalDoc } from './store.js';
-import { updateDashboard } from './ui.js';
-
 // ===== CONFORMIDADE =====
-export function showComplianceDetails() {
+function showComplianceDetails() {
     const content = document.getElementById('complianceContent');
 
     if (state.nonComplianceList.length === 0) {
@@ -36,16 +32,16 @@ export function showComplianceDetails() {
     document.getElementById('complianceModal').classList.add('active');
 }
 
-export function showComplianceAnalysis() {
+function showComplianceAnalysis() {
     showComplianceDetails();
 }
 
-export function closeComplianceModal() {
+function closeComplianceModal() {
     document.getElementById('complianceModal').classList.remove('active');
 }
 
 // ===== HISTÓRICO =====
-export function showHistory(code) {
+function showHistory(code) {
     const spare = state.sparesData[code];
     if (!spare) return;
 
@@ -72,12 +68,12 @@ export function showHistory(code) {
     document.getElementById('historyModal').classList.add('active');
 }
 
-export function closeHistoryModal() {
+function closeHistoryModal() {
     document.getElementById('historyModal').classList.remove('active');
 }
 
 // ===== DESCARTES =====
-export function showDisposalRecords() {
+function showDisposalRecords() {
     const content = document.getElementById('disposalContent');
 
     if (state.disposalRecords.length === 0) {
@@ -121,12 +117,12 @@ export function showDisposalRecords() {
     document.getElementById('disposalModal').classList.add('active');
 }
 
-export function closeDisposalModal() {
+function closeDisposalModal() {
     document.getElementById('disposalModal').classList.remove('active');
 }
 
 // ===== LOGÍSTICA REVERSA =====
-export function showDisposalTransport() {
+function showDisposalTransport() {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
         alert('⚠️ ACESSO NEGADO\n\nApenas TRANSPORTADORA pode processar logística reversa.');
         return;
@@ -208,7 +204,7 @@ export function showDisposalTransport() {
     showDisposalDocument(disposalDoc, processedItems);
 }
 
-export function showDisposalDocument(docNumber, items) {
+function showDisposalDocument(docNumber, items) {
     const content = document.getElementById('disposalContent');
     const totalHours = items.reduce((sum, item) => sum + item.hoursWorked, 0);
 
@@ -275,12 +271,12 @@ export function showDisposalDocument(docNumber, items) {
 }
 
 // ===== BOAS-VINDAS =====
-export function closeWelcomeModal() {
+function closeWelcomeModal() {
     document.getElementById('welcomeModal').classList.remove('active');
     localStorage.setItem('welcomeShown', 'true');
 }
 
-export function checkFirstVisit() {
+function checkFirstVisit() {
     const welcomeShown = localStorage.getItem('welcomeShown');
     if (!welcomeShown) {
         document.getElementById('welcomeModal').classList.add('active');

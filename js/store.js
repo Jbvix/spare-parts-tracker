@@ -3,10 +3,8 @@
  * Fonte única de verdade para todo o estado da aplicação.
  */
 
-import { addLog } from './utils.js';
-
 // ===== ESTADO GLOBAL =====
-export const state = {
+const state = {
     spareCounter: parseInt(localStorage.getItem('spareCounter')) || 1,
     disposalDocCounter: parseInt(localStorage.getItem('disposalDocCounter')) || 1,
     blockchainLog: [],
@@ -20,7 +18,7 @@ export const state = {
 };
 
 // ===== PERSISTÊNCIA =====
-export function saveAll() {
+function saveAll() {
     try {
         localStorage.setItem('sparesData', JSON.stringify(state.sparesData));
         localStorage.setItem('equipmentState', JSON.stringify(state.equipmentState));
@@ -41,7 +39,7 @@ export function saveAll() {
     }
 }
 
-export function loadAll() {
+function loadAll() {
     const saved = key => localStorage.getItem(key);
 
     // Peças
@@ -93,7 +91,7 @@ export function loadAll() {
 }
 
 // ===== GESTÃO DE EVENTOS =====
-export function addSpareEvent(code, type, data) {
+function addSpareEvent(code, type, data) {
     if (!state.sparesData[code]) {
         state.sparesData[code] = {
             code,
@@ -114,7 +112,7 @@ export function addSpareEvent(code, type, data) {
     saveAll();
 }
 
-export function generateDisposalDoc() {
+function generateDisposalDoc() {
     const year = new Date().getFullYear();
     const docNumber = `DD-${year}-${String(state.disposalDocCounter).padStart(4, '0')}`;
     state.disposalDocCounter++;
@@ -122,7 +120,7 @@ export function generateDisposalDoc() {
     return docNumber;
 }
 
-export function clearAll() {
+function clearAll() {
     localStorage.clear();
     state.spareCounter = 1;
     state.disposalDocCounter = 1;

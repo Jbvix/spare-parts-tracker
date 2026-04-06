@@ -2,20 +2,8 @@
  * SPARES-CHAIN v6.2 — UI (Criação de Painéis e Elementos)
  */
 
-import { escapeHtml, addLog } from './utils.js';
-import { state, saveAll, addSpareEvent } from './store.js';
-
-// Handler callbacks — set by app.js via setHandlers() before use
-let _onDragStart = null;
-let _onContextMenu = null;
-
-export function setHandlers(dragFn, contextMenuFn) {
-    _onDragStart = dragFn;
-    _onContextMenu = contextMenuFn;
-}
-
 // ===== CRIAÇÃO DE PAINÉIS =====
-export function createScannerPanel() {
+function createScannerPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -37,7 +25,7 @@ export function createScannerPanel() {
     return panel;
 }
 
-export function createAlmoxPanel() {
+function createAlmoxPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -57,7 +45,7 @@ export function createAlmoxPanel() {
     return panel;
 }
 
-export function createTransportadoraCollectPanel() {
+function createTransportadoraCollectPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel transportadora';
     panel.innerHTML = `
@@ -76,7 +64,7 @@ export function createTransportadoraCollectPanel() {
     return panel;
 }
 
-export function createTransportadoraDeliverPanel() {
+function createTransportadoraDeliverPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel transportadora';
     panel.innerHTML = `
@@ -95,7 +83,7 @@ export function createTransportadoraDeliverPanel() {
     return panel;
 }
 
-export function createEquipmentPanel() {
+function createEquipmentPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -119,7 +107,7 @@ export function createEquipmentPanel() {
     return panel;
 }
 
-export function createShelfPanel() {
+function createShelfPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -139,7 +127,7 @@ export function createShelfPanel() {
     return panel;
 }
 
-export function createQuarantinePanel() {
+function createQuarantinePanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -165,7 +153,7 @@ export function createQuarantinePanel() {
 }
 
 // ===== INSTRUÇÕES POR PAPEL =====
-export function showRoleInstructions() {
+function showRoleInstructions() {
     if (!state.currentUser) return;
 
     const instructionsDiv = document.getElementById('roleInstructions');
@@ -224,7 +212,7 @@ export function showRoleInstructions() {
 }
 
 // ===== CRIAÇÃO DE ELEMENTOS DE PEÇAS =====
-export function createSpareElement(name, code, icon) {
+function createSpareElement(name, code, icon) {
     const spareDiv = document.createElement('div');
     spareDiv.className = 'spare-item';
     spareDiv.draggable = true;
@@ -243,8 +231,8 @@ export function createSpareElement(name, code, icon) {
         </div>
     `;
 
-    if (_onDragStart) spareDiv.addEventListener('dragstart', _onDragStart);
-    if (_onContextMenu) spareDiv.addEventListener('contextmenu', _onContextMenu);
+    spareDiv.addEventListener('dragstart', drag);
+    spareDiv.addEventListener('contextmenu', showContextMenu);
 
     const sparesList = document.getElementById('sparesList');
     if (sparesList) sparesList.appendChild(spareDiv);
@@ -261,7 +249,7 @@ export function createSpareElement(name, code, icon) {
     }
 }
 
-export function recreateSpareElement(spare) {
+function recreateSpareElement(spare) {
     const spareDiv = document.createElement('div');
     spareDiv.className = 'spare-item';
     spareDiv.draggable = true;
@@ -289,14 +277,14 @@ export function recreateSpareElement(spare) {
         ${spare.nonCompliantOps && spare.nonCompliantOps.length > 0 ? '<div class="spare-warning">!</div>' : ''}
     `;
 
-    if (_onDragStart) spareDiv.addEventListener('dragstart', _onDragStart);
-    if (_onContextMenu) spareDiv.addEventListener('contextmenu', _onContextMenu);
+    spareDiv.addEventListener('dragstart', drag);
+    spareDiv.addEventListener('contextmenu', showContextMenu);
 
     const sparesList = document.getElementById('sparesList');
     if (sparesList) sparesList.appendChild(spareDiv);
 }
 
-export function restoreInstalledPart(equipName, installedData) {
+function restoreInstalledPart(equipName, installedData) {
     const code = installedData.code;
     const element = document.getElementById(code);
 
@@ -320,7 +308,7 @@ export function restoreInstalledPart(equipName, installedData) {
     updateSpareStatus(element);
 }
 
-export function updateSpareStatus(element) {
+function updateSpareStatus(element) {
     const statusDiv = element.querySelector('.spare-status');
     if (statusDiv) {
         const scanCount = element.dataset.scanCount || 0;
@@ -329,7 +317,7 @@ export function updateSpareStatus(element) {
 }
 
 // ===== ADICIONAR PEÇA =====
-export function addSpare() {
+function addSpare() {
     if (state.currentUser && state.currentUser.role !== 'ALMOX') {
         alert('⚠️ ACESSO NEGADO\n\nApenas ALMOXARIFE pode receber peças de fornecedores.');
         return;
@@ -356,7 +344,7 @@ export function addSpare() {
 }
 
 // ===== DASHBOARD =====
-export function updateDashboard() {
+function updateDashboard() {
     let totalParts = 0;
     let inTransit = 0;
     let installed = 0;
@@ -402,7 +390,7 @@ export function updateDashboard() {
     });
 }
 
-export function updateComplianceGrid() {
+function updateComplianceGrid() {
     const grid = document.getElementById('complianceGrid');
 
     if (state.nonComplianceList.length === 0) {
@@ -421,7 +409,7 @@ export function updateComplianceGrid() {
 }
 
 // ===== INICIALIZAÇÃO DE PEÇAS =====
-export function initializeSpares() {
+function initializeSpares() {
     const savedSpares = localStorage.getItem('sparesData');
     if (savedSpares) {
         try {
