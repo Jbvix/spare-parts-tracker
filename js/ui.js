@@ -537,29 +537,17 @@ function updateComplianceGrid() {
 
 // ===== INICIALIZAÇÃO DE PEÇAS =====
 function initializeSpares() {
+    ensureSparesData();
     const savedSpares = localStorage.getItem('sparesData');
-    let empty = true;
     if (savedSpares) {
         try {
             state.sparesData = JSON.parse(savedSpares);
-            if (Object.keys(state.sparesData).length > 0) empty = false;
+            if (!state.sparesData || typeof state.sparesData !== 'object') state.sparesData = {};
             for (let code in state.sparesData) {
                 recreateSpareElement(state.sparesData[code]);
             }
             addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
-        } catch (e) { console.error('Erro ao carregar peças:', e); }
-    }
-    if (empty) {
-        const exampleSpares = [
-            { name: 'Filtro de Óleo', code: 'FO-2025-001', icon: 'droplet', currentState: 'EM_TRANSITO', scanCount: 1 },
-            { name: 'Filtro de Ar', code: 'FA-2025-002', icon: 'wind', currentState: 'EM_TRANSITO', scanCount: 1 }
-        ];
-        exampleSpares.forEach(spare => {
-            state.sparesData[spare.code] = spare;
-            recreateSpareElement(spare);
-        });
-        localStorage.setItem('sparesData', JSON.stringify(state.sparesData));
-        addLog(`${icon('refresh')} Peças de exemplo criadas para teste visual`, 'info');
+        } catch (e) { console.error('Erro ao carregar peças:', e); state.sparesData = {}; }
     }
     updateDashboard();
 }
