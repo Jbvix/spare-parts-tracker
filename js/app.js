@@ -241,6 +241,37 @@ function repopulateInTransitForBordoRobusto(tentativas = 0) {
     }
 }
 
+// Cria painel de trânsito se houver peças em trânsito ao trocar para Chefe de Máquinas
+function ensureAndPopulateInTransitPanel() {
+    if (!state.sparesData) return;
+    const emTransito = Object.values(state.sparesData).filter(spare => spare.currentState === 'EM_TRANSITO');
+    if (emTransito.length === 0) return; // Não cria painel se não houver peças
+    let panel = document.getElementById('inTransitForBordo');
+    if (!panel) {
+        const panelsGrid = document.getElementById('panelsGrid');
+        if (panelsGrid) {
+            const transitPanel = document.createElement('div');
+            transitPanel.className = 'panel';
+            transitPanel.innerHTML = `
+                <div class="panel-header" style="border-bottom-color: #ffa502;">
+                    <span class="panel-icon">${icon('truck')}</span>
+                    <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>
+                </div>
+                <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
+                    Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.
+                </p>
+                <div id="inTransitForBordo" style="min-height: 40px;"></div>
+            `;
+            panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
+            panel = transitPanel.querySelector('#inTransitForBordo');
+        }
+    }
+    if (panel) {
+        panel.innerHTML = '';
+        emTransito.forEach(spare => recreateSpareElement(spare));
+    }
+}
+
 // Substitui chamada anterior por esta robusta
 if (typeof switchRole === 'function') {
     const originalSwitchRole = switchRole;
@@ -258,7 +289,7 @@ if (typeof switchRole === 'function') {
         updateDashboard();
         addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
         if (newRole === 'CHEFE_MAQ') {
-            repopulateInTransitForBordoRobusto();
+            setTimeout(ensureAndPopulateInTransitPanel, 200);
         }
     };
 }
