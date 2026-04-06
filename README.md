@@ -58,6 +58,8 @@ FORNECEDOR → ALMOXARIFADO → TRANSPORTADORA → BORDO → INSTALAÇÃO → RE
 
 - **Drag & Drop** — arraste peças entre painéis para simular movimentações
 - **Scanner QR Code** — animação de escaneamento com validação
+- **Prateleira NÃO CONFORME** — painel especial para peças removidas com não-conformidade
+- **Recebimento de recondicionados via TRANSPORTADORA** — peças recondicionadas só podem ser recebidas após passagem obrigatória pelo painel da transportadora
 - **Dashboard KPIs** — total de peças, scans, trânsito, instaladas, quarentena, descartadas, conformidade
 - **Análise de Conformidade** — detecta operações sem escaneamento obrigatório
 - **Cadeia de Custódia Tripla** — ALMOX → TRANSPORTADORA → BORDO
@@ -105,7 +107,7 @@ SPARES-CHAIN/
 │   ├── app.js         # Bootstrap / Inicialização
 │   ├── store.js       # Estado global e persistência (localStorage)
 │   ├── ui.js          # Criação de painéis e elementos
-│   ├── handlers.js    # Drag & Drop, ações, menu de contexto
+│   ├── handlers.js    # Drag & Drop, ações, menu de contexto, regras de não conforme/recondicionado
 │   ├── compliance.js  # Modais de conformidade, histórico, descarte
 │   ├── icons.js       # Sistema de ícones SVG (Lucide/Feather)
 │   └── utils.js       # Funções utilitárias (hash, escape, etc.)
@@ -119,6 +121,7 @@ SPARES-CHAIN/
 
 - Sanitização de inputs via `escapeHtml()` para prevenção de XSS
 - Controle de acesso por papel (operações restritas por função)
+- Bloqueio de recebimento direto de peças recondicionadas (exige transportadora)
 - Dupla confirmação para ações destrutivas (reset)
 
 ---
@@ -141,6 +144,9 @@ SPARES-CHAIN/
 - **Gerenciamento de estado global** — store centralizado com persistência localStorage
 - **Correções de CSS** — especificidade do `.hidden` corrigida com `!important`
 - **Ordem de carregamento** — scripts reorganizados para dependências corretas
+- **Prateleira NÃO CONFORME** — peças removidas com não-conformidade vão para área especial, destacada em vermelho
+- **Recebimento de recondicionados** — peças recondicionadas só podem ser recebidas via TRANSPORTADORA (bloqueio de recebimento direto)
+- **Fluxo revisado** — removidos agora podem ir para quarentena, prateleira bordo ou não conforme, conforme motivo/remanejamento
 
 ### v6.2 — 09 de Outubro de 2025
 - Peças removidas vão direto para quarentena
