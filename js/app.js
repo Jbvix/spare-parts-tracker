@@ -293,21 +293,3 @@ if (typeof switchRole === 'function') {
         }
     };
 }
-
-// Força logout e volta para tela de login ao trocar de papel
-function forceLogoutToSwitchRole() {
-    localStorage.removeItem('currentUser');
-    location.reload();
-}
-
-// [AUTO-RESET] Limpa o localStorage e recarrega ao iniciar para garantir ambiente limpo
-(function() {
-    try {
-        localStorage.clear();
-        console.log('[AUTO-RESET] localStorage limpo para início de sessão.');
-        // Opcional: recarrega a página automaticamente após limpar
-        // location.reload();
-    } catch (e) {
-        console.warn('[AUTO-RESET] Falha ao limpar localStorage:', e);
-    }
-})();
