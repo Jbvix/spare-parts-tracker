@@ -364,7 +364,20 @@ function placeSpareElement(spareDiv) {
     } else if (stateName === 'EM_TRANSITO') {
         target = document.getElementById('transportInTransit');
         if (!target) {
-            target = ensureInTransitForBordoPanel();
+            // fallback seguro
+            let panel = document.getElementById('inTransitForBordo');
+            if (!panel) {
+                const panelsGrid = document.getElementById('panelsGrid');
+                if (panelsGrid) {
+                    const transitPanel = document.createElement('div');
+                    transitPanel.className = 'panel';
+                    transitPanel.innerHTML = `
+                        <div class="panel-header" style="border-bottom-color: #ffa502;\">\n                            <span class="panel-icon">${icon('truck')}</span>\n                            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>\n                        </div>\n                        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;\">\n                            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.\n                        </p>\n                        <div id="inTransitForBordo" style="min-height: 40px;\"></div>\n                    `;
+                    panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
+                    panel = transitPanel.querySelector('#inTransitForBordo');
+                }
+            }
+            target = panel;
         }
     } else if (stateName === 'ENTREGUE_BORDO') {
         target = document.getElementById('bordoList');
@@ -601,7 +614,84 @@ placeSpareElement = function(spareDiv) {
     } else if (stateName === 'EM_TRANSITO') {
         target = document.getElementById('transportInTransit');
         if (!target) {
-            target = ensureInTransitForBordoPanel();
+            // fallback seguro
+            let panel = document.getElementById('inTransitForBordo');
+            if (!panel) {
+                const panelsGrid = document.getElementById('panelsGrid');
+                if (panelsGrid) {
+                    const transitPanel = document.createElement('div');
+                    transitPanel.className = 'panel';
+                    transitPanel.innerHTML = `
+                        <div class="panel-header" style="border-bottom-color: #ffa502;\">\n                            <span class="panel-icon">${icon('truck')}</span>\n                            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>\n                        </div>\n                        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;\">\n                            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.\n                        </p>\n                        <div id="inTransitForBordo" style="min-height: 40px;\"></div>\n                    `;
+                    panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
+                    panel = transitPanel.querySelector('#inTransitForBordo');
+                }
+            }
+            target = panel;
+        }
+    } else if (stateName === 'ENTREGUE_BORDO') {
+        target = document.getElementById('bordoList');
+    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
+        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
+        const shelfSlot = target ? target.closest('.shelf-slot') : null;
+        if (shelfSlot) shelfSlot.classList.add('occupied');
+    } else if (stateName === 'INSTALADO') {
+        target = ensureSpareStagingArea();
+    } else if (stateName === 'QUARENTENA') {
+        target = document.getElementById('quarantineList');
+    } else if (stateName === 'DESCARTADO_FINAL') {
+        return;
+    }
+    if (target) target.appendChild(spareDiv);
+};
+
+// [CORREÇÃO] Garante que state.sparesData sempre existe e funções globais não são sobrescritas incorretamente
+function ensureSparesData() {
+    if (!state.sparesData || typeof state.sparesData !== 'object') {
+        state.sparesData = {};
+    }
+}
+
+// Patch seguro para initializeSpares
+window.initializeSpares = function() {
+    ensureSparesData();
+    const savedSpares = localStorage.getItem('sparesData');
+    if (savedSpares) {
+        try {
+            state.sparesData = JSON.parse(savedSpares);
+            if (!state.sparesData || typeof state.sparesData !== 'object') state.sparesData = {};
+            for (let code in state.sparesData) {
+                recreateSpareElement(state.sparesData[code]);
+            }
+            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
+        } catch (e) { console.error('Erro ao carregar peças:', e); state.sparesData = {}; }
+    }
+    updateDashboard();
+};
+
+// Patch seguro para placeSpareElement
+window.placeSpareElement = function(spareDiv) {
+    const stateName = spareDiv.dataset.state || 'RECEBIDO';
+    let target = null;
+    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
+        target = document.getElementById('sparesList');
+    } else if (stateName === 'EM_TRANSITO') {
+        target = document.getElementById('transportInTransit');
+        if (!target) {
+            // fallback seguro
+            let panel = document.getElementById('inTransitForBordo');
+            if (!panel) {
+                const panelsGrid = document.getElementById('panelsGrid');
+                if (panelsGrid) {
+                    const transitPanel = document.createElement('div');
+                    transitPanel.className = 'panel';
+                    transitPanel.innerHTML = `
+                        <div class="panel-header" style="border-bottom-color: #ffa502;\">\n                            <span class="panel-icon">${icon('truck')}</span>\n                            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>\n                        </div>\n                        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;\">\n                            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.\n                        </p>\n                        <div id="inTransitForBordo" style="min-height: 40px;\"></div>\n                    `;
+                    panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
+                    panel = transitPanel.querySelector('#inTransitForBordo');
+                }
+            }
+            target = panel;
         }
     } else if (stateName === 'ENTREGUE_BORDO') {
         target = document.getElementById('bordoList');
