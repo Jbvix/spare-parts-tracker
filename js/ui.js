@@ -476,16 +476,15 @@ function addSpare() {
 
 // ===== DASHBOARD =====
 function updateDashboard() {
+    ensureSparesData();
     let totalParts = 0;
     let inTransit = 0;
     let installed = 0;
     let inQuarantine = 0;
     let totalScans = 0;
     let totalOps = 0;
-
     const allSpares = document.querySelectorAll('.spare-item');
     totalParts = allSpares.length;
-
     allSpares.forEach(spare => {
         const st = spare.dataset.state;
         const scanCount = parseInt(spare.dataset.scanCount || 0);
@@ -494,30 +493,27 @@ function updateDashboard() {
         if (st === 'QUARENTENA') inQuarantine++;
         totalScans += scanCount;
     });
-
     for (let code in state.sparesData) {
-        totalOps += state.sparesData[code].history.length;
+        if (state.sparesData[code] && state.sparesData[code].history) {
+            totalOps += state.sparesData[code].history.length;
+        }
     }
     if (totalOps === 0) totalOps = totalParts;
-
     document.getElementById('kpiTotalParts').textContent = totalParts;
     document.getElementById('kpiTotalScans').textContent = totalScans;
     document.getElementById('kpiInTransit').textContent = inTransit;
     document.getElementById('kpiInstalled').textContent = installed;
     document.getElementById('kpiQuarantine').textContent = inQuarantine;
-    document.getElementById('kpiDisposed').textContent = state.disposalRecords.length;
-    document.getElementById('kpiNonCompliant').textContent = state.nonComplianceList.length;
-
+    document.getElementById('kpiDisposed').textContent = state.disposalRecords ? state.disposalRecords.length : 0;
+    document.getElementById('kpiNonCompliant').textContent = state.nonComplianceList ? state.nonComplianceList.length : 0;
     const compliance = totalOps > 0 ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0) : 100;
     document.getElementById('kpiCompliance').textContent = compliance + '%';
-
-    updateComplianceGrid();
-
+    if (typeof updateComplianceGrid === 'function') updateComplianceGrid();
     console.log('[DASH] Dashboard atualizado:', {
         totalParts, totalScans, inTransit, installed, inQuarantine,
-        disposed: state.disposalRecords.length, totalOps,
+        disposed: state.disposalRecords ? state.disposalRecords.length : 0, totalOps,
         compliance: compliance + '%',
-        nonCompliance: state.nonComplianceList.length
+        nonCompliance: state.nonComplianceList ? state.nonComplianceList.length : 0
     });
 }
 
@@ -568,105 +564,55 @@ function initializeSpares() {
     updateDashboard();
 }
 
-// Garante que o painel de trânsito do Chefe de Máquinas é criado dinamicamente, igual ao fluxo da transportadora, e nunca falta no DOM
-const originalInitializeInterface = initializeInterface;
-initializeInterface = function() {
-    const panelsGrid = document.getElementById('panelsGrid');
-    panelsGrid.innerHTML = '';
-    const role = state.currentUser.role;
-    panelsGrid.appendChild(createScannerPanel());
-    if (role === 'ALMOX') {
-        panelsGrid.appendChild(createAlmoxPanel());
-    } else if (role === 'TRANSPORTADORA') {
-        panelsGrid.appendChild(createAlmoxPanel());
-        panelsGrid.appendChild(createTransportadoraCollectPanel());
-        panelsGrid.appendChild(createTransportadoraDeliverPanel());
-        panelsGrid.appendChild(createQuarantinePanel());
-    } else if (role === 'CHEFE_MAQ') {
-        // Cria painel de trânsito ANTES de inicializar as peças
-        panelsGrid.appendChild(createInTransitPanel());
-        panelsGrid.appendChild(createTransportadoraCollectPanel());
-        panelsGrid.appendChild(createBordoPanel());
-        panelsGrid.appendChild(createEquipmentPanel());
-        panelsGrid.appendChild(createShelfPanel());
-        panelsGrid.appendChild(createQuarantinePanel());
-    } else if (role === 'AUDITOR') {
-        panelsGrid.appendChild(createAlmoxPanel());
-        panelsGrid.appendChild(createTransportadoraCollectPanel());
-        panelsGrid.appendChild(createTransportadoraDeliverPanel());
-        panelsGrid.appendChild(createBordoPanel());
-        panelsGrid.appendChild(createEquipmentPanel());
-        panelsGrid.appendChild(createQuarantinePanel());
-    }
-    // Só depois de todos os painéis
-    setTimeout(() => {
-        initializeSpares();
-    }, 0);
-};
-
-// placeSpareElement robusto para EM_TRANSITO
-const originalPlaceSpareElement = placeSpareElement;
-placeSpareElement = function(spareDiv) {
-    const stateName = spareDiv.dataset.state || 'RECEBIDO';
-    let target = null;
-    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
-        target = document.getElementById('sparesList');
-    } else if (stateName === 'EM_TRANSITO') {
-        target = document.getElementById('transportInTransit');
-        if (!target) {
-            // fallback seguro
-            let panel = document.getElementById('inTransitForBordo');
-            if (!panel) {
-                const panelsGrid = document.getElementById('panelsGrid');
-                if (panelsGrid) {
-                    const transitPanel = document.createElement('div');
-                    transitPanel.className = 'panel';
-                    transitPanel.innerHTML = `
-                        <div class="panel-header" style="border-bottom-color: #ffa502;\">\n                            <span class="panel-icon">${icon('truck')}</span>\n                            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>\n                        </div>\n                        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;\">\n                            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.\n                        </p>\n                        <div id="inTransitForBordo" style="min-height: 40px;\"></div>\n                    `;
-                    panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
-                    panel = transitPanel.querySelector('#inTransitForBordo');
-                }
-            }
-            target = panel;
-        }
-    } else if (stateName === 'ENTREGUE_BORDO') {
-        target = document.getElementById('bordoList');
-    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
-        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
-        const shelfSlot = target ? target.closest('.shelf-slot') : null;
-        if (shelfSlot) shelfSlot.classList.add('occupied');
-    } else if (stateName === 'INSTALADO') {
-        target = ensureSpareStagingArea();
-    } else if (stateName === 'QUARENTENA') {
-        target = document.getElementById('quarantineList');
-    } else if (stateName === 'DESCARTADO_FINAL') {
-        return;
-    }
-    if (target) target.appendChild(spareDiv);
-};
-
-// [CORREÇÃO] Garante que state.sparesData sempre existe e funções globais não são sobrescritas incorretamente
+// [CORREÇÃO] Garante que state.sparesData sempre existe antes de updateDashboard
 function ensureSparesData() {
     if (!state.sparesData || typeof state.sparesData !== 'object') {
         state.sparesData = {};
     }
 }
 
-// Patch seguro para initializeSpares
-window.initializeSpares = function() {
+// Patch seguro para updateDashboard
+const originalUpdateDashboard = updateDashboard;
+window.updateDashboard = function() {
     ensureSparesData();
-    const savedSpares = localStorage.getItem('sparesData');
-    if (savedSpares) {
-        try {
-            state.sparesData = JSON.parse(savedSpares);
-            if (!state.sparesData || typeof state.sparesData !== 'object') state.sparesData = {};
-            for (let code in state.sparesData) {
-                recreateSpareElement(state.sparesData[code]);
-            }
-            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
-        } catch (e) { console.error('Erro ao carregar peças:', e); state.sparesData = {}; }
+    let totalParts = 0;
+    let inTransit = 0;
+    let installed = 0;
+    let inQuarantine = 0;
+    let totalScans = 0;
+    let totalOps = 0;
+    const allSpares = document.querySelectorAll('.spare-item');
+    totalParts = allSpares.length;
+    allSpares.forEach(spare => {
+        const st = spare.dataset.state;
+        const scanCount = parseInt(spare.dataset.scanCount || 0);
+        if (st === 'EM_TRANSITO') inTransit++;
+        if (st === 'INSTALADO') installed++;
+        if (st === 'QUARENTENA') inQuarantine++;
+        totalScans += scanCount;
+    });
+    for (let code in state.sparesData) {
+        if (state.sparesData[code] && state.sparesData[code].history) {
+            totalOps += state.sparesData[code].history.length;
+        }
     }
-    updateDashboard();
+    if (totalOps === 0) totalOps = totalParts;
+    document.getElementById('kpiTotalParts').textContent = totalParts;
+    document.getElementById('kpiTotalScans').textContent = totalScans;
+    document.getElementById('kpiInTransit').textContent = inTransit;
+    document.getElementById('kpiInstalled').textContent = installed;
+    document.getElementById('kpiQuarantine').textContent = inQuarantine;
+    document.getElementById('kpiDisposed').textContent = state.disposalRecords ? state.disposalRecords.length : 0;
+    document.getElementById('kpiNonCompliant').textContent = state.nonComplianceList ? state.nonComplianceList.length : 0;
+    const compliance = totalOps > 0 ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0) : 100;
+    document.getElementById('kpiCompliance').textContent = compliance + '%';
+    if (typeof updateComplianceGrid === 'function') updateComplianceGrid();
+    console.log('[DASH] Dashboard atualizado:', {
+        totalParts, totalScans, inTransit, installed, inQuarantine,
+        disposed: state.disposalRecords ? state.disposalRecords.length : 0, totalOps,
+        compliance: compliance + '%',
+        nonCompliance: state.nonComplianceList ? state.nonComplianceList.length : 0
+    });
 };
 
 // Patch seguro para placeSpareElement
