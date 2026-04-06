@@ -28,6 +28,15 @@ function drop(event) {
 
     const isScanner = dropZone.id === 'scanner' || dropZone.closest('#scanner');
 
+    // Impede recebimento direto de sobressalente recondicionado em almoxarifado ou bordo
+    const spareData = state.sparesData[code];
+    const forbiddenDirectReceive = spareData && spareData.origin === 'RECONDICIONADO' &&
+        (dropZone.id === 'almoxarifado' || dropZone.id === 'bordo' || dropZone.classList.contains('shelf-slot'));
+    if (forbiddenDirectReceive) {
+        addLog(`${icon('alertTriangle')} Sobressalente recondicionado deve ser recebido via TRANSPORTADORA!`, 'danger');
+        return;
+    }
+
     if (isScanner) {
         handleScan(draggedElement, name, code);
     } else if (dropZone.id === 'transportCollect') {
@@ -275,143 +284,123 @@ function handleRemoval(equipName, installedData) {
 
     const code = installedData.code;
     const name = installedData.name;
-
-    const reason = prompt(
+    const operator = state.currentUser ? state.currentUser.name : 'Operador';
+    const removalHours = prompt(`Horas do equipamento no momento da remoção:`);
+    const reasonText = prompt(
         `Motivo da remoção de ${name}:\n\n` +
         `1 - Fim de vida útil\n` +
         `2 - Defeito/Falha\n` +
         `3 - Manutenção preventiva\n` +
         `4 - Upgrade\n` +
-        `5 - Outro\n\n` +
-        `Digite o número:`, '1'
+        `Descreva:`
     );
+    const hoursWorked = installedData.hours && removalHours ? (parseFloat(removalHours) - parseFloat(installedData.hours)) : 0;
+    const removalHash = generateHash(code, equipName, removalHours, reasonText);
+    const elementToMove = document.getElementById(code);
 
-    const reasons = {
-        '1': 'Fim de vida útil',
-        '2': 'Defeito/Falha',
-        '3': 'Manutenção preventiva',
-        '4': 'Upgrade',
-        '5': 'Outro'
-    };
-    const reasonText = reasons[reason] || 'Não especificado';
-
-
-    let removalHours = prompt(`Horas do equipamento na REMOÇÃO:`, '12500.0');
-    if (!removalHours) return;
-    removalHours = parseFloat(removalHours);
-    if (isNaN(removalHours)) {
-        alert('Valor de horas inválido.');
-        return;
-    }
-    if (removalHours < installedData.hours) {
-        alert('Horas de remoção não podem ser menores que as horas de instalação!');
-        return;
-    }
-
-    const hoursWorked = removalHours - installedData.hours;
-
-    const willDispose = confirm(
-        `Peça removida: ${name}\n` +
-        `Horas trabalhadas: ${hoursWorked.toFixed(1)}h\n` +
-        `Motivo: ${reasonText}\n\n` +
-        `Destino:\n` +
-        `SIM = Quarentena (aguarda logística reversa)\n` +
-        `NÃO = Retorna ao estoque (peça reutilizável)\n\n` +
-        `Enviar para QUARENTENA?`
-    );
-
-    const operator = state.currentUser ? state.currentUser.name : 'Operador';
-    const removalHash = generateHash(code, equipName, removalHours);
-
-    if (willDispose) {
+    // Se não-conforme, vai para prateleira especial
+    const isNaoConforme = installedData.nonCompliantOps && installedData.nonCompliantOps.length > 0;
+    if (isNaoConforme || (!removalHours && !reasonText)) {
         addLog(
-            `${icon('trash')} REMOVIDO → QUARENTENA: ${name} de ${equipName} | ` +
-            `Trabalhou: ${hoursWorked.toFixed(1)}h | ` +
-            `Motivo: ${reasonText} | ${operator}`,
-            'warning'
+            isNaoConforme ?
+                `${icon('alertTriangle')} REMOVIDO → NÃO CONFORME: ${name} de ${equipName} | Trabalhou: ${hoursWorked.toFixed(1)}h | ${operator}` :
+                `${icon('archive')} REMOVIDO → PRATELEIRA BORDO: ${name} de ${equipName} | Trabalhou: ${hoursWorked.toFixed(1)}h | Peça reutilizável | ${operator}`,
+            isNaoConforme ? 'danger' : 'success'
         );
-
-        addSpareEvent(code, 'REMOVIDO', {
+        addSpareEvent(code, isNaoConforme ? 'NAO_CONFORME' : 'ARMAZENADO', {
             operator, equipment: equipName,
             installHours: installedData.hours,
             removalHours: parseFloat(removalHours),
             hoursWorked, reason: reasonText,
-            destination: 'QUARENTENA',
-            hash: removalHash
-        });
-
-        const elementToMove = document.getElementById(code);
-        if (elementToMove) {
-            elementToMove.dataset.state = 'QUARENTENA';
-            elementToMove.classList.remove('installed');
-            elementToMove.classList.add('removed');
-            if (state.sparesData[code]) {
-                state.sparesData[code].currentState = 'QUARENTENA';
-            }
-
-            const quarantineList = document.getElementById('quarantineList');
-            if (quarantineList) {
-                quarantineList.appendChild(elementToMove);
-
-                state.quarantineItems.push({
-                    code, name,
-                    addedBy: operator,
-                    addedDate: new Date().toISOString(),
-                    removalData: {
-                        equipment: equipName,
-                        installHours: installedData.hours,
-                        removalHours: parseFloat(removalHours),
-                        hoursWorked, reason: reasonText
-                    }
-                });
-            }
-
-            updateSpareStatus(elementToMove);
-
-            setTimeout(() => {
-                alert(
-                    `PEÇA ENVIADA PARA QUARENTENA\n\n` +
-                    `${name} foi removido do ${equipName}.\n\n` +
-                    `A peça foi movida AUTOMATICAMENTE para\n` +
-                    `o painel "QUARENTENA/RESÍDUOS".\n\n` +
-                    `Aguardando coleta pela transportadora.`
-                );
-            }, 500);
-        }
-    } else {
-        addLog(
-            `${icon('upload')} REMOVIDO → ESTOQUE: ${name} de ${equipName} | ` +
-            `Trabalhou: ${hoursWorked.toFixed(1)}h | ` +
-            `Peça reutilizável | ${operator}`,
-            'success'
-        );
-
-        addSpareEvent(code, 'REMOVIDO', {
-            operator, equipment: equipName,
-            installHours: installedData.hours,
-            removalHours: parseFloat(removalHours),
-            hoursWorked, reason: reasonText,
-            destination: 'ESTOQUE',
+            destination: isNaoConforme ? 'NAO_CONFORME' : 'PRATELEIRA_BORDO',
             returnToStock: true,
             hash: removalHash
         });
-
-        const elementToMove = document.getElementById(code);
         if (elementToMove) {
-            elementToMove.dataset.state = 'RECEBIDO';
+            elementToMove.dataset.state = isNaoConforme ? 'NAO_CONFORME' : 'ARMAZENADO';
             elementToMove.classList.remove('installed');
             elementToMove.classList.remove('removed');
             if (state.sparesData[code]) {
-                state.sparesData[code].currentState = 'RECEBIDO';
+                state.sparesData[code].currentState = isNaoConforme ? 'NAO_CONFORME' : 'ARMAZENADO';
             }
-
-            const sparesList = document.getElementById('sparesList');
-            if (sparesList) sparesList.appendChild(elementToMove);
-
+            if (isNaoConforme) {
+                const ncDiv = document.getElementById('shelfNAO_CONFORME');
+                if (ncDiv) ncDiv.appendChild(elementToMove);
+            } else {
+                // Por padrão, coloca na primeira prateleira vazia
+                let placed = false;
+                for (const shelf of ['A1','A2','A3','B1','B2','B3']) {
+                    const shelfDiv = document.getElementById(`shelf${shelf}`);
+                    if (shelfDiv && shelfDiv.children.length === 0) {
+                        shelfDiv.appendChild(elementToMove);
+                        elementToMove.dataset.shelf = shelf;
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) {
+                    // Se todas ocupadas, volta para bordoList
+                    const bordoList = document.getElementById('bordoList');
+                    if (bordoList) bordoList.appendChild(elementToMove);
+                }
+            }
             updateSpareStatus(elementToMove);
         }
+        return;
     }
 
+    // Caso padrão: envia para quarentena
+    addLog(
+        `Motivo: ${reasonText} | ${operator}`,
+        'warning'
+    );
+
+    addSpareEvent(code, 'REMOVIDO', {
+        operator, equipment: equipName,
+        installHours: installedData.hours,
+        removalHours: parseFloat(removalHours),
+        hoursWorked, reason: reasonText,
+        destination: 'QUARENTENA',
+        hash: removalHash
+    });
+
+    if (elementToMove) {
+        elementToMove.dataset.state = 'QUARENTENA';
+        elementToMove.classList.remove('installed');
+        elementToMove.classList.add('removed');
+        if (state.sparesData[code]) {
+            state.sparesData[code].currentState = 'QUARENTENA';
+        }
+
+        const quarantineList = document.getElementById('quarantineList');
+        if (quarantineList) {
+            quarantineList.appendChild(elementToMove);
+
+            state.quarantineItems.push({
+                code, name,
+                addedBy: operator,
+                addedDate: new Date().toISOString(),
+                removalData: {
+                    equipment: equipName,
+                    installHours: installedData.hours,
+                    removalHours: parseFloat(removalHours),
+                    hoursWorked, reason: reasonText
+                }
+            });
+        }
+
+        updateSpareStatus(elementToMove);
+
+        setTimeout(() => {
+            alert(
+                `PEÇA ENVIADA PARA QUARENTENA\n\n` +
+                `${name} foi removido do ${equipName}.\n\n` +
+                `A peça foi movida AUTOMATICAMENTE para\n` +
+                `o painel "QUARENTENA/RESÍDUOS".\n\n` +
+                `Aguardando coleta pela transportadora.`
+            );
+        }, 500);
+    }
     delete state.equipmentState[equipName];
 
     const equipSlot = document.querySelector(`[data-equip="${equipName}"]`);

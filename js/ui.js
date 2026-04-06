@@ -142,6 +142,14 @@ function createShelfPanel() {
                 </div>
             `).join('')}
         </div>
+        <div class="panel-header" style="margin-top:20px;">
+            <span class="panel-icon">${icon('alertTriangle')}</span>
+            <span class="panel-title" style="color:#ff4757;">NÃO CONFORME</span>
+        </div>
+        <div class="shelf-slot" data-shelf="NAO_CONFORME" style="border:2px solid #ff4757; background:rgba(255,71,87,0.08); min-height:60px;" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <div>NAO CONFORME</div>
+            <div id="shelfNAO_CONFORME"></div>
+        </div>
     `;
     return panel;
 }

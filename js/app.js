@@ -136,6 +136,7 @@ function initializeInterface() {
         panelsGrid.appendChild(createTransportadoraDeliverPanel());
         panelsGrid.appendChild(createQuarantinePanel());
     } else if (role === 'CHEFE_MAQ') {
+        panelsGrid.appendChild(createTransportadoraCollectPanel()); // Chefe pode enviar peças para transportadora
         panelsGrid.appendChild(createBordoPanel());
         panelsGrid.appendChild(createEquipmentPanel());
         panelsGrid.appendChild(createShelfPanel());
