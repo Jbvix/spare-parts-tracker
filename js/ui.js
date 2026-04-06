@@ -366,8 +366,8 @@ function recreateSpareElement(spare) {
             <div class="spare-status">Estado: ${escapeHtml(spare.currentState || 'RECEBIDO')} | Scans: ${spare.scanCount || 0}</div>
         </div>
         ${spare.nonCompliantOps && spare.nonCompliantOps.length > 0 ? '<div class="spare-warning">!</div>' : ''}
-        ${(state.currentUser.role === 'ALMOX' && (spare.currentState === 'RECEBIDO' || spare.currentState === 'ESCANEADO')) ? `<button class='action-btn' style='margin-top:6px;' onclick='openRegisterTransporterModal("${spare.code}")'>${icon('truck')} Registrar Saída/Transportador</button>` : ''}
-        ${(state.currentUser.role === 'TRANSPORTADORA' && spare.currentState === 'EM_TRANSITO') ? `<button class='action-btn' style='margin-top:6px;' onclick='openArrivalModal("${spare.code}")'>${icon('clock')} Registrar Chegada no Destino</button><button class='action-btn' style='margin-top:6px;' onclick='openDeliveryModal("${spare.code}")'>${icon('upload')} Registrar Entrega a Bordo</button>` : ''}
+        ${(state.currentUser.role === 'ALMOX' && (spare.currentState === 'RECEBIDO' || spare.currentState === 'ESCANEADO')) ? `<button class='action-btn' style='margin-top:6px;' onclick='openRegisterTransporterModal(\"${spare.code}\")'>${icon('truck')} Registrar Saída/Transportador</button>` : ''}
+        ${(state.currentUser.role === 'TRANSPORTADORA' && spare.currentState === 'EM_TRANSITO') ? `<button class='action-btn' style='margin-top:6px;' onclick='openArrivalModal(\"${spare.code}\")'>${icon('clock')} Registrar Chegada no Destino</button><button class='action-btn' style='margin-top:6px;' onclick='openDeliveryModal(\"${spare.code}\")'>${icon('upload')} Registrar Entrega a Bordo</button>` : ''}
     `;
         <!-- Modal Chegada no Destino -->
         <div id="arrivalModal" class="modal" style="display:none; z-index:9999;">
