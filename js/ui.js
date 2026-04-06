@@ -24,6 +24,7 @@ function createScannerPanel() {
     `;
     return panel;
 }
+window.createScannerPanel = createScannerPanel;
 
 function createAlmoxPanel() {
     const panel = document.createElement('div');
@@ -383,51 +384,9 @@ function recreateSpareElement(spare) {
             </div>
         </div>
         <!-- Modal Entrega a Bordo -->
-        <div id="deliveryModal" class="modal" style="display:none; z-index:9999;">
-            <div class="modal-content" style="max-width:400px;">
-                <div class="modal-header">
-                    <h2 class="modal-title">Registrar Entrega a Bordo</h2>
-                    <button class="modal-close" onclick="closeDeliveryModal()">✕</button>
-                </div>
-                <form id="deliveryForm" onsubmit="submitDeliveryForm(event)">
-                    <label>Data/Hora de Entrega:<input type="datetime-local" id="deliveryDatetime" required></label><br>
-                    <input type="hidden" id="deliveryPartCode">
-                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Entrega</button>
-                </form>
-            </div>
-        </div>
-
-    spareDiv.addEventListener('dragstart', drag);
-    spareDiv.addEventListener('contextmenu', showContextMenu);
-
-    placeSpareElement(spareDiv);
-}
-
-function placeSpareElement(spareDiv) {
-    const stateName = spareDiv.dataset.state || 'RECEBIDO';
-    let target = null;
-    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
-        target = document.getElementById('sparesList');
-    } else if (stateName === 'EM_TRANSITO') {
-        target = document.getElementById('transportInTransit');
-        if (!target) {
-            // fallback seguro
-            let panel = document.getElementById('inTransitForBordo');
-            if (!panel) {
-                const panelsGrid = document.getElementById('panelsGrid');
-                if (panelsGrid) {
-                    const transitPanel = document.createElement('div');
-                    transitPanel.className = 'panel';
-                    transitPanel.innerHTML = `
-                        <div class="panel-header" style="border-bottom-color: #ffa502;\">\n                            <span class="panel-icon">${icon('truck')}</span>\n                            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>\n                        </div>\n                        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;\">\n                            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.\n                        </p>\n                        <div id="inTransitForBordo" style="min-height: 40px;\"></div>\n                    `;
-                    panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
-                    panel = transitPanel.querySelector('#inTransitForBordo');
-                }
-            }
-            target = panel;
-        }
-    } else if (stateName === 'ENTREGUE_BORDO') {
-        target = document.getElementById('bordoList');
+        <div id="registerTransporterModal" class="modal" style="display:none; z-index:9999;"></div>
+        <div id="arrivalModal" class="modal" style="display:none; z-index:9999;"></div>
+        <div id="deliveryModal" class="modal" style="display:none; z-index:9999;"></div>
     } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
         target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
         const shelfSlot = target ? target.closest('.shelf-slot') : null;
