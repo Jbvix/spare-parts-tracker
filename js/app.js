@@ -30,7 +30,7 @@ function login() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainInterface').classList.remove('hidden');
 
-    addLog(`🔐 Login realizado: ${escapeHtml(name)} (${getRoleName(role)}) - ${escapeHtml(location)}`, 'success');
+    addLog(`${icon('lock')} Login realizado: ${escapeHtml(name)} (${getRoleName(role)}) - ${escapeHtml(location)}`, 'success');
 
     initializeInterface();
     showRoleInstructions();
@@ -45,14 +45,14 @@ function logout() {
 // ===== RESET =====
 function confirmReset() {
     const confirmed = confirm(
-        '⚠️ ATENÇÃO: RESET TOTAL DO SISTEMA\n\n' +
+        'ATENÇÃO: RESET TOTAL DO SISTEMA\n\n' +
         'Esta ação irá:\n' +
-        '❌ Apagar TODAS as peças\n' +
-        '❌ Limpar histórico blockchain\n' +
-        '❌ Zerar contadores\n' +
-        '❌ Remover equipamentos instalados\n' +
-        '❌ Limpar quarentena\n' +
-        '❌ Apagar registros de descarte\n\n' +
+        'Apagar TODAS as peças\n' +
+        'Limpar histórico blockchain\n' +
+        'Zerar contadores\n' +
+        'Remover equipamentos instalados\n' +
+        'Limpar quarentena\n' +
+        'Apagar registros de descarte\n\n' +
         'Esta ação é IRREVERSÍVEL!\n\n' +
         'Deseja realmente RESETAR o sistema?'
     );
@@ -60,7 +60,7 @@ function confirmReset() {
     if (!confirmed) return;
 
     const doubleCheck = confirm(
-        '🔴 ÚLTIMA CONFIRMAÇÃO!\n\n' +
+        'ÚLTIMA CONFIRMAÇÃO!\n\n' +
         'Tem CERTEZA ABSOLUTA?\n\n' +
         'Todos os dados serão PERDIDOS PERMANENTEMENTE!'
     );
@@ -103,10 +103,10 @@ function resetSystem() {
 
         updateDashboard();
 
-        addLog('🔄 SISTEMA RESETADO | Todos os dados apagados', 'danger');
+        addLog(`${icon('refresh')} SISTEMA RESETADO | Todos os dados apagados`, 'danger');
 
         alert(
-            '✅ RESET CONCLUÍDO!\n\n' +
+            'RESET CONCLUÍDO!\n\n' +
             'Sistema reiniciado com sucesso.\n' +
             'Todos os dados foram apagados.\n\n' +
             'Você pode começar do zero!'
@@ -115,7 +115,7 @@ function resetSystem() {
         setTimeout(() => location.reload(), 1000);
     } catch (e) {
         console.error('Erro ao resetar:', e);
-        alert('❌ ERRO ao resetar!\n\n' + e.message);
+        alert('ERRO ao resetar!\n\n' + e.message);
     }
 }
 

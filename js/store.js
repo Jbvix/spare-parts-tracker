@@ -27,7 +27,7 @@ function saveAll() {
         localStorage.setItem('nonComplianceList', JSON.stringify(state.nonComplianceList));
         localStorage.setItem('spareCounter', state.spareCounter);
         localStorage.setItem('disposalDocCounter', state.disposalDocCounter);
-        console.log('💾 Dados salvos:', {
+        console.log('[SAVE] Dados salvos:', {
             peças: Object.keys(state.sparesData).length,
             equipamentos: Object.keys(state.equipmentState).length,
             descartes: state.disposalRecords.length,
@@ -47,7 +47,7 @@ function loadAll() {
     if (sparesRaw) {
         try {
             state.sparesData = JSON.parse(sparesRaw);
-            addLog(`🔄 ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
+            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
         } catch (e) { console.error('Erro ao carregar peças:', e); }
     }
 
@@ -56,7 +56,7 @@ function loadAll() {
     if (equipRaw) {
         try {
             state.equipmentState = JSON.parse(equipRaw);
-            addLog(`🔧 ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
+            addLog(`${icon('wrench')} ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
         } catch (e) { console.error('Erro ao carregar equipamentos:', e); }
     }
 
@@ -65,7 +65,7 @@ function loadAll() {
     if (disposalRaw) {
         try {
             state.disposalRecords = JSON.parse(disposalRaw);
-            addLog(`🗑️ ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
+            addLog(`${icon('trash')} ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
         } catch (e) { console.error('Erro ao carregar descartes:', e); }
     }
 
@@ -74,7 +74,7 @@ function loadAll() {
     if (quarantineRaw) {
         try {
             state.quarantineItems = JSON.parse(quarantineRaw);
-            addLog(`⚠️ ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
+            addLog(`${icon('alertTriangle')} ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
         } catch (e) { console.error('Erro ao carregar quarentena:', e); }
     }
 
@@ -84,7 +84,7 @@ function loadAll() {
         try {
             state.nonComplianceList = JSON.parse(ncRaw);
             if (state.nonComplianceList.length > 0) {
-                addLog(`⚠️ ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
+                addLog(`${icon('alertTriangle')} ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
             }
         } catch (e) { console.error('Erro ao carregar não-conformidades:', e); }
     }

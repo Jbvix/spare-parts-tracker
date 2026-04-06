@@ -8,7 +8,7 @@ function createScannerPanel() {
     panel.className = 'panel';
     panel.innerHTML = `
         <div class="panel-header">
-            <span class="panel-icon">📸</span>
+            <span class="panel-icon">${icon('qrCode')}</span>
             <span class="panel-title">SCANNER QR CODE</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
@@ -17,7 +17,7 @@ function createScannerPanel() {
         <div id="scanner" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
             <div class="scanner-frame">
                 <div class="scanner-line"></div>
-                <div class="qr-placeholder">📱</div>
+                <div class="qr-placeholder">${icon('smartphone','xl')}</div>
             </div>
             <p>Arraste uma peça aqui</p>
         </div>
@@ -30,16 +30,16 @@ function createAlmoxPanel() {
     panel.className = 'panel';
     panel.innerHTML = `
         <div class="panel-header">
-            <span class="panel-icon">📦</span>
+            <span class="panel-icon">${icon('package')}</span>
             <span class="panel-title">ALMOXARIFADO</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
             ${state.currentUser.role === 'ALMOX' ? 'Recebe de fornecedores e entrega para transportadora.' : 'Peças disponíveis no almoxarifado (apenas visualização).'}
         </p>
         <div id="almoxarifado" class="drop-zone" ${state.currentUser.role === 'ALMOX' ? 'ondrop="drop(event)" ondragover="allowDrop(event)"' : ''}>
-            <p>🏭 ESTOQUE ALMOXARIFADO</p>
+            <p>${icon('factory')} ESTOQUE ALMOXARIFADO</p>
             <div id="sparesList"></div>
-            ${state.currentUser.role === 'ALMOX' ? '<button class="action-btn" onclick="addSpare()">➕ Receber Peça</button>' : ''}
+            ${state.currentUser.role === 'ALMOX' ? '<button class="action-btn" onclick="addSpare()">' + icon('plus') + ' Receber Peça</button>' : ''}
         </div>
     `;
     return panel;
@@ -50,14 +50,14 @@ function createTransportadoraCollectPanel() {
     panel.className = 'panel transportadora';
     panel.innerHTML = `
         <div class="panel-header transportadora">
-            <span class="panel-icon">🚚</span>
+            <span class="panel-icon">${icon('truck')}</span>
             <span class="panel-title transportadora">COLETA (Almoxarifado)</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
             Transportadora coleta peças do almoxarifado. <strong>ESCANEAR ao coletar!</strong>
         </p>
         <div id="transportCollect" class="drop-zone transportadora" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <p>📥 ZONA DE COLETA</p>
+            <p>${icon('package')} ZONA DE COLETA</p>
             <p style="font-size: 12px; color: #ffa502;">Arraste peça escaneada para coletar</p>
         </div>
     `;
@@ -69,14 +69,14 @@ function createTransportadoraDeliverPanel() {
     panel.className = 'panel transportadora';
     panel.innerHTML = `
         <div class="panel-header transportadora">
-            <span class="panel-icon">🚢</span>
+            <span class="panel-icon">${icon('ship')}</span>
             <span class="panel-title transportadora">ENTREGA (Bordo)</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
             Transportadora entrega peças a bordo. <strong>ESCANEAR ao entregar!</strong>
         </p>
         <div id="transportDeliver" class="drop-zone transportadora" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <p>📤 ZONA DE ENTREGA</p>
+            <p>${icon('upload')} ZONA DE ENTREGA</p>
             <div id="transportInTransit" style="margin-top: 15px;"></div>
         </div>
     `;
@@ -88,19 +88,19 @@ function createEquipmentPanel() {
     panel.className = 'panel';
     panel.innerHTML = `
         <div class="panel-header">
-            <span class="panel-icon">⚙️</span>
+            <span class="panel-icon">${icon('cog')}</span>
             <span class="panel-title">MOTORES & EQUIPAMENTOS</span>
         </div>
         <div class="equipment-slot" data-equip="MCP_BB" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div class="equipment-label">🚢 MCP BOMBORDO (BB)</div>
+            <div class="equipment-label">${icon('ship')} MCP BOMBORDO (BB)</div>
             <div id="equipMCPBB"></div>
         </div>
         <div class="equipment-slot" data-equip="MCP_BE" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div class="equipment-label">🚢 MCP BOMBORDO (BE)</div>
+            <div class="equipment-label">${icon('ship')} MCP BOMBORDO (BE)</div>
             <div id="equipMCPBE"></div>
         </div>
         <div class="equipment-slot" data-equip="GERADOR" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div class="equipment-label">⚡ GERADOR PRINCIPAL</div>
+            <div class="equipment-label">${icon('zap')} GERADOR PRINCIPAL</div>
             <div id="equipGERADOR"></div>
         </div>
     `;
@@ -112,7 +112,7 @@ function createShelfPanel() {
     panel.className = 'panel';
     panel.innerHTML = `
         <div class="panel-header">
-            <span class="panel-icon">🗄️</span>
+            <span class="panel-icon">${icon('archive')}</span>
             <span class="panel-title">PRATELEIRAS BORDO</span>
         </div>
         <div class="shelf-grid">
@@ -132,7 +132,7 @@ function createQuarantinePanel() {
     panel.className = 'panel';
     panel.innerHTML = `
         <div class="panel-header" style="border-bottom-color: #ffa502;">
-            <span class="panel-icon">🗑️</span>
+            <span class="panel-icon">${icon('trash')}</span>
             <span class="panel-title" style="color: #ffa502;">QUARENTENA/RESÍDUOS</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
@@ -143,11 +143,11 @@ function createQuarantinePanel() {
                 'Peças removidas aguardando coleta pela transportadora.'}
         </p>
         <div id="quarantine" class="drop-zone" style="border-color: #ffa502; background: rgba(255, 165, 2, 0.1);" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <p>⚠️ ZONA DE QUARENTENA</p>
+            <p>${icon('alertTriangle')} ZONA DE QUARENTENA</p>
             <p style="font-size: 12px; color: #ffa502;">Apenas peças REMOVIDAS</p>
             <div id="quarantineList" style="margin-top: 15px;"></div>
         </div>
-        ${state.currentUser.role === 'TRANSPORTADORA' ? '<button class="action-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);" onclick="showDisposalTransport()">🚚 Logística Reversa</button>' : ''}
+        ${state.currentUser.role === 'TRANSPORTADORA' ? '<button class="action-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);" onclick="showDisposalTransport()">' + icon('truck') + ' Logística Reversa</button>' : ''}
     `;
     return panel;
 }
@@ -162,48 +162,48 @@ function showRoleInstructions() {
     switch (state.currentUser.role) {
         case 'ALMOX':
             instructions = `
-                <h3 style="color: #00d4ff; margin-bottom: 10px;">📋 Fluxo ALMOXARIFE:</h3>
+                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo ALMOXARIFE:</h3>
                 <ol style="line-height: 2;">
-                    <li><strong>Receber peça:</strong> Clique "➕ Receber Peça" → QR gerado automaticamente</li>
+                    <li><strong>Receber peça:</strong> Clique "${icon('plus')} Receber Peça" → QR gerado automaticamente</li>
                     <li><strong>Escanear:</strong> Arraste peça → Scanner QR (validar autenticidade)</li>
                     <li><strong>Entregar para transportadora:</strong> Transportadora coleta do almoxarifado</li>
                 </ol>
-                <p style="margin-top: 15px; color: #00ff88;"><strong>✅ RESPONSABILIDADE:</strong> Garantir que peça genuína sai do almoxarifado com QR escaneado.</p>
+                <p style="margin-top: 15px; color: #00ff88;"><strong>${icon('checkCircle')} RESPONSABILIDADE:</strong> Garantir que peça genuína sai do almoxarifado com QR escaneado.</p>
             `;
             break;
         case 'TRANSPORTADORA':
             instructions = `
-                <h3 style="color: #ffa502; margin-bottom: 10px;">📋 Fluxo TRANSPORTADORA:</h3>
+                <h3 style="color: #ffa502; margin-bottom: 10px;">${icon('fileText')} Fluxo TRANSPORTADORA:</h3>
                 <ol style="line-height: 2;">
                     <li><strong>Coletar no almoxarifado:</strong> Escanear peça → Arrastar para "ZONA DE COLETA"</li>
                     <li><strong>Transporte:</strong> Peça fica "EM TRÂNSITO" (rastreável)</li>
                     <li><strong>Entregar no bordo:</strong> Escanear novamente → Registrar entrega</li>
                 </ol>
-                <p style="margin-top: 15px; color: #ffa502;"><strong>⚠️ CRÍTICO:</strong> SEMPRE escanear em COLETA e ENTREGA. Falha = não-conformidade registrada!</p>
+                <p style="margin-top: 15px; color: #ffa502;"><strong>${icon('alertTriangle')} CRÍTICO:</strong> SEMPRE escanear em COLETA e ENTREGA. Falha = não-conformidade registrada!</p>
             `;
             break;
         case 'CHEFE_MAQ':
             instructions = `
-                <h3 style="color: #00d4ff; margin-bottom: 10px;">📋 Fluxo CHEFE DE MÁQUINAS:</h3>
+                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo CHEFE DE MÁQUINAS:</h3>
                 <ol style="line-height: 2;">
                     <li><strong>Receber da transportadora:</strong> Escanear peça ao receber</li>
                     <li><strong>Armazenar:</strong> Arrastar para prateleira (A1-B3)</li>
                     <li><strong>Retirar:</strong> Escanear ao retirar da prateleira</li>
                     <li><strong>Instalar:</strong> Escanear → Arrastar para motor + informar horas</li>
                 </ol>
-                <p style="margin-top: 15px; color: #00ff88;"><strong>✅ BOA PRÁTICA:</strong> Escanear em CADA movimentação mantém conformidade 100%!</p>
+                <p style="margin-top: 15px; color: #00ff88;"><strong>${icon('checkCircle')} BOA PRÁTICA:</strong> Escanear em CADA movimentação mantém conformidade 100%!</p>
             `;
             break;
         case 'AUDITOR':
             instructions = `
-                <h3 style="color: #00d4ff; margin-bottom: 10px;">📋 Responsabilidades AUDITOR:</h3>
+                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Responsabilidades AUDITOR:</h3>
                 <ol style="line-height: 2;">
                     <li><strong>Monitorar conformidade:</strong> Painel mostra operações sem escaneamento</li>
                     <li><strong>Identificar responsáveis:</strong> Cada não-conformidade registra operador</li>
                     <li><strong>Análise de tendências:</strong> Quem/onde ocorrem mais falhas?</li>
                     <li><strong>Relatórios:</strong> Clique "Ver Detalhes" para análise completa</li>
                 </ol>
-                <p style="margin-top: 15px; color: #ff4757;"><strong>⚠️ ALERTA:</strong> Não-conformidades quebram cadeia de custódia e invalidam garantias!</p>
+                <p style="margin-top: 15px; color: #ff4757;"><strong>${icon('alertTriangle')} ALERTA:</strong> Não-conformidades quebram cadeia de custódia e invalidam garantias!</p>
             `;
             break;
     }
@@ -212,7 +212,7 @@ function showRoleInstructions() {
 }
 
 // ===== CRIAÇÃO DE ELEMENTOS DE PEÇAS =====
-function createSpareElement(name, code, icon) {
+function createSpareElement(name, code, spareIcon) {
     const spareDiv = document.createElement('div');
     spareDiv.className = 'spare-item';
     spareDiv.draggable = true;
@@ -223,7 +223,7 @@ function createSpareElement(name, code, icon) {
     spareDiv.dataset.scanCount = '0';
 
     spareDiv.innerHTML = `
-        <span class="spare-icon">${escapeHtml(icon)}</span>
+        <span class="spare-icon">${icon(spareIcon)}</span>
         <div class="spare-info">
             <div class="spare-name">${escapeHtml(name)}</div>
             <div class="spare-code">${escapeHtml(code)}</div>
@@ -239,7 +239,7 @@ function createSpareElement(name, code, icon) {
 
     if (!state.sparesData[code]) {
         state.sparesData[code] = {
-            code, name, icon,
+            code, name, icon: spareIcon,
             history: [],
             currentState: 'RECEBIDO',
             scanCount: 0,
@@ -268,7 +268,7 @@ function recreateSpareElement(spare) {
     }
 
     spareDiv.innerHTML = `
-        <span class="spare-icon">${escapeHtml(spare.icon)}</span>
+        <span class="spare-icon">${icon(spare.icon)}</span>
         <div class="spare-info">
             <div class="spare-name">${escapeHtml(spare.name)}</div>
             <div class="spare-code">${escapeHtml(spare.code)}</div>
@@ -319,7 +319,7 @@ function updateSpareStatus(element) {
 // ===== ADICIONAR PEÇA =====
 function addSpare() {
     if (state.currentUser && state.currentUser.role !== 'ALMOX') {
-        alert('⚠️ ACESSO NEGADO\n\nApenas ALMOXARIFE pode receber peças de fornecedores.');
+        alert('ACESSO NEGADO\n\nApenas ALMOXARIFE pode receber peças de fornecedores.');
         return;
     }
 
@@ -330,10 +330,10 @@ function addSpare() {
     state.spareCounter++;
     localStorage.setItem('spareCounter', state.spareCounter);
 
-    createSpareElement(spareName, spareCode, '🔧');
+    createSpareElement(spareName, spareCode, 'wrench');
 
     const operator = state.currentUser ? state.currentUser.name : 'Sistema';
-    addLog(`📦 RECEBIDO no ALMOXARIFADO: ${escapeHtml(spareName)} (${escapeHtml(spareCode)}) | Recebedor: ${escapeHtml(operator)}`, 'success');
+    addLog(`${icon('package')} RECEBIDO no ALMOXARIFADO: ${escapeHtml(spareName)} (${escapeHtml(spareCode)}) | Recebedor: ${escapeHtml(operator)}`, 'success');
 
     addSpareEvent(spareCode, 'RECEBIDO', {
         operator,
@@ -382,7 +382,7 @@ function updateDashboard() {
 
     updateComplianceGrid();
 
-    console.log('📊 Dashboard atualizado:', {
+    console.log('[DASH] Dashboard atualizado:', {
         totalParts, totalScans, inTransit, installed, inQuarantine,
         disposed: state.disposalRecords.length, totalOps,
         compliance: compliance + '%',
@@ -394,7 +394,7 @@ function updateComplianceGrid() {
     const grid = document.getElementById('complianceGrid');
 
     if (state.nonComplianceList.length === 0) {
-        grid.innerHTML = '<div style="text-align: center; color: #00ff88; padding: 20px;">✓ Sem não-conformidades</div>';
+        grid.innerHTML = '<div style="text-align: center; color: #00ff88; padding: 20px;">' + icon('checkCircle') + ' Sem não-conformidades</div>';
         return;
     }
 
@@ -417,7 +417,7 @@ function initializeSpares() {
             for (let code in state.sparesData) {
                 recreateSpareElement(state.sparesData[code]);
             }
-            addLog(`🔄 ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
+            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
         } catch (e) { console.error('Erro ao carregar peças:', e); }
     }
 
@@ -428,7 +428,7 @@ function initializeSpares() {
             for (let equipName in state.equipmentState) {
                 restoreInstalledPart(equipName, state.equipmentState[equipName]);
             }
-            addLog(`🔧 ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
+            addLog(`${icon('wrench')} ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
         } catch (e) { console.error('Erro ao carregar equipamentos:', e); }
     }
 
@@ -436,7 +436,7 @@ function initializeSpares() {
     if (savedDisposals) {
         try {
             state.disposalRecords = JSON.parse(savedDisposals);
-            addLog(`🗑️ ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
+            addLog(`${icon('trash')} ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
         } catch (e) { console.error('Erro ao carregar descartes:', e); }
     }
 
@@ -456,7 +456,7 @@ function initializeSpares() {
                     }
                 }
             });
-            addLog(`⚠️ ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
+            addLog(`${icon('alertTriangle')} ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
         } catch (e) { console.error('Erro ao carregar quarentena:', e); }
     }
 
@@ -465,16 +465,16 @@ function initializeSpares() {
         try {
             state.nonComplianceList = JSON.parse(savedNonCompliance);
             if (state.nonComplianceList.length > 0) {
-                addLog(`⚠️ ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
+                addLog(`${icon('alertTriangle')} ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
             }
         } catch (e) { console.error('Erro ao carregar não-conformidades:', e); }
     }
 
     if (Object.keys(state.sparesData).length === 0) {
         const exampleSpares = [
-            { name: 'Filtro de Óleo', code: 'FO-2025-001', icon: '🛢️' },
-            { name: 'Filtro de Ar', code: 'FA-2025-002', icon: '💨' },
-            { name: 'Rolamento SKF', code: 'RL-2025-003', icon: '⚙️' }
+            { name: 'Filtro de Óleo', code: 'FO-2025-001', icon: 'droplet' },
+            { name: 'Filtro de Ar', code: 'FA-2025-002', icon: 'wind' },
+            { name: 'Rolamento SKF', code: 'RL-2025-003', icon: 'cog' }
         ];
         exampleSpares.forEach(spare => createSpareElement(spare.name, spare.code, spare.icon));
     }

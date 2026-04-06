@@ -53,10 +53,10 @@ function handleScan(element, name, code) {
     element.dataset.scanCount = scanCount + 1;
     element.dataset.lastScan = new Date().toISOString();
 
-    addLog(`📸 ESCANEADO: ${name} (${code}) - Scan #${scanCount + 1}`, 'success');
+    addLog(`${icon('qrCode')} ESCANEADO: ${name} (${code}) - Scan #${scanCount + 1}`, 'success');
 
     setTimeout(() => {
-        addLog(`✅ VALIDADO: QR autêntico | Assinatura: OK | Estado: ${currentState}`, 'success');
+        addLog(`${icon('checkCircle')} VALIDADO: QR autêntico | Assinatura: OK | Estado: ${currentState}`, 'success');
     }, 600);
 
     element.dataset.state = 'ESCANEADO';
@@ -75,13 +75,13 @@ function handleScan(element, name, code) {
     saveAll();
     updateDashboard();
 
-    console.log('✓ Scan registrado:', { code, name, scanNumber: scanCount + 1 });
+    console.log('[SCAN] Scan registrado:', { code, name, scanNumber: scanCount + 1 });
 }
 
 // ===== TRANSPORTADORA - COLETA =====
 function handleTransportCollect(element, name, code, currentState) {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
-        alert('⚠️ ACESSO NEGADO\n\nApenas TRANSPORTADORA pode coletar peças.');
+        alert('ACESSO NEGADO\n\nApenas TRANSPORTADORA pode coletar peças.');
         return;
     }
 
@@ -103,7 +103,7 @@ function handleTransportCollect(element, name, code, currentState) {
         warning.textContent = '!';
         element.appendChild(warning);
 
-        addLog(`⚠️ NÃO-CONFORMIDADE: ${name} coletado SEM escaneamento por ${state.currentUser.name}`, 'danger');
+        addLog(`${icon('alertTriangle')} NÃO-CONFORMIDADE: ${name} coletado SEM escaneamento por ${state.currentUser.name}`, 'danger');
     }
 
     const targetDiv = document.getElementById('transportInTransit');
@@ -114,7 +114,7 @@ function handleTransportCollect(element, name, code, currentState) {
     element.classList.add('in-transit');
     updateSpareStatus(element);
 
-    addLog(`🚚 COLETADO: ${name} por ${state.currentUser.name} (Transportadora)`, 'warning');
+    addLog(`${icon('truck')} COLETADO: ${name} por ${state.currentUser.name} (Transportadora)`, 'warning');
 
     addSpareEvent(code, 'COLETADO', {
         operator: state.currentUser.name,
@@ -129,12 +129,12 @@ function handleTransportCollect(element, name, code, currentState) {
 // ===== TRANSPORTADORA - ENTREGA =====
 function handleTransportDeliver(element, name, code, currentState) {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
-        alert('⚠️ ACESSO NEGADO\n\nApenas TRANSPORTADORA pode entregar peças.');
+        alert('ACESSO NEGADO\n\nApenas TRANSPORTADORA pode entregar peças.');
         return;
     }
 
     if (currentState !== 'EM_TRANSITO') {
-        alert('⚠️ ATENÇÃO\n\nEsta peça não está em trânsito. Colete do almoxarifado primeiro.');
+        alert('ATENÇÃO\n\nEsta peça não está em trânsito. Colete do almoxarifado primeiro.');
         return;
     }
 
@@ -142,7 +142,7 @@ function handleTransportDeliver(element, name, code, currentState) {
     const timeSinceLastScan = lastScan ? (Date.now() - new Date(lastScan).getTime()) / 1000 : Infinity;
 
     if (timeSinceLastScan > 60) {
-        const proceed = confirm(`⚠️ ATENÇÃO: ${name} não foi escaneado antes da entrega.\n\nPara conformidade, escanear é OBRIGATÓRIO.\n\nProsseguir mesmo assim? (NÃO RECOMENDADO)`);
+        const proceed = confirm(`ATENÇÃO: ${name} não foi escaneado antes da entrega.\n\nPara conformidade, escanear é OBRIGATÓRIO.\n\nProsseguir mesmo assim? (NÃO RECOMENDADO)`);
         if (!proceed) return;
 
         const nonCompliance = {
@@ -156,14 +156,14 @@ function handleTransportDeliver(element, name, code, currentState) {
         state.nonComplianceList.push(nonCompliance);
         state.sparesData[code].nonCompliantOps.push(nonCompliance);
 
-        addLog(`⚠️ NÃO-CONFORMIDADE: ${name} entregue SEM escaneamento por ${state.currentUser.name}`, 'danger');
+        addLog(`${icon('alertTriangle')} NÃO-CONFORMIDADE: ${name} entregue SEM escaneamento por ${state.currentUser.name}`, 'danger');
     }
 
     element.dataset.state = 'ENTREGUE_BORDO';
     element.classList.remove('in-transit');
     updateSpareStatus(element);
 
-    addLog(`📦 ENTREGUE A BORDO: ${name} por ${state.currentUser.name}`, 'success');
+    addLog(`${icon('package')} ENTREGUE A BORDO: ${name} por ${state.currentUser.name}`, 'success');
 
     addSpareEvent(code, 'ENTREGUE_BORDO', {
         operator: state.currentUser.name,
@@ -180,14 +180,14 @@ function handleInstallation(element, equipSlot, name, code, currentState) {
     const equipName = equipSlot.dataset.equip;
 
     if (currentState !== 'ESCANEADO' && currentState !== 'ENTREGUE_BORDO') {
-        alert('⚠️ ATENÇÃO\n\nEscanear peça antes de instalar é OBRIGATÓRIO para conformidade.');
+        alert('ATENÇÃO\n\nEscanear peça antes de instalar é OBRIGATÓRIO para conformidade.');
         return;
     }
 
     if (state.equipmentState[equipName]) {
         const installed = state.equipmentState[equipName];
         const proceed = confirm(
-            `⚠️ JÁ EXISTE PEÇA INSTALADA!\n\n` +
+            `JÁ EXISTE PEÇA INSTALADA!\n\n` +
             `Equipamento: ${equipName}\n` +
             `Peça atual: ${installed.name} (${installed.code})\n` +
             `Horas instalação: ${installed.hours}\n\n` +
@@ -223,7 +223,7 @@ function handleInstallation(element, equipSlot, name, code, currentState) {
         operator
     };
 
-    addLog(`⚙️ INSTALADO: ${name} → ${equipName} | Horas: ${hours} | ${operator} | Hash: ${eventHash}`, 'success');
+    addLog(`${icon('cog')} INSTALADO: ${name} → ${equipName} | Horas: ${hours} | ${operator} | Hash: ${eventHash}`, 'success');
 
     addSpareEvent(code, 'INSTALADO', {
         operator,
@@ -280,7 +280,7 @@ function handleRemoval(equipName, installedData) {
 
     if (willDispose) {
         addLog(
-            `🗑️ REMOVIDO → QUARENTENA: ${name} de ${equipName} | ` +
+            `${icon('trash')} REMOVIDO → QUARENTENA: ${name} de ${equipName} | ` +
             `Trabalhou: ${hoursWorked.toFixed(1)}h | ` +
             `Motivo: ${reasonText} | ${operator}`,
             'warning'
@@ -322,7 +322,7 @@ function handleRemoval(equipName, installedData) {
 
             setTimeout(() => {
                 alert(
-                    `✅ PEÇA ENVIADA PARA QUARENTENA\n\n` +
+                    `PEÇA ENVIADA PARA QUARENTENA\n\n` +
                     `${name} foi removido do ${equipName}.\n\n` +
                     `A peça foi movida AUTOMATICAMENTE para\n` +
                     `o painel "QUARENTENA/RESÍDUOS".\n\n` +
@@ -332,7 +332,7 @@ function handleRemoval(equipName, installedData) {
         }
     } else {
         addLog(
-            `📤 REMOVIDO → ESTOQUE: ${name} de ${equipName} | ` +
+            `${icon('upload')} REMOVIDO → ESTOQUE: ${name} de ${equipName} | ` +
             `Trabalhou: ${hoursWorked.toFixed(1)}h | ` +
             `Peça reutilizável | ${operator}`,
             'success'
@@ -383,7 +383,7 @@ function handleShelfStorage(element, shelfSlot, name, code) {
     updateSpareStatus(element);
 
     const operator = state.currentUser ? state.currentUser.name : 'Operador';
-    addLog(`🗄️ ARMAZENADO: ${name} → Prateleira ${shelfId} | ${operator}`, 'success');
+    addLog(`${icon('archive')} ARMAZENADO: ${name} → Prateleira ${shelfId} | ${operator}`, 'success');
 
     addSpareEvent(code, 'ARMAZENADO', { operator, shelf: shelfId });
 
@@ -394,7 +394,7 @@ function handleShelfStorage(element, shelfSlot, name, code) {
 // ===== QUARENTENA =====
 function handleQuarantineDrop(element, name, code, currentState) {
     if (currentState !== 'REMOVIDO') {
-        alert('⚠️ ACESSO NEGADO\n\nApenas peças REMOVIDAS podem ir para a QUARENTENA.\n\nPrimeiro remova a peça do equipamento.');
+        alert('ACESSO NEGADO\n\nApenas peças REMOVIDAS podem ir para a QUARENTENA.\n\nPrimeiro remova a peça do equipamento.');
         return;
     }
 
@@ -415,7 +415,7 @@ function handleQuarantineDrop(element, name, code, currentState) {
     state.quarantineItems.push(quarantineItem);
 
     const operator = state.currentUser ? state.currentUser.name : 'Operador';
-    addLog(`⚠️ QUARENTENA: ${name} movido para zona de quarentena | ${operator}`, 'warning');
+    addLog(`${icon('alertTriangle')} QUARENTENA: ${name} movido para zona de quarentena | ${operator}`, 'warning');
 
     addSpareEvent(code, 'QUARENTENA', { operator, location: 'QUARANTINE_ZONE' });
 
@@ -437,7 +437,7 @@ function showContextMenu(event) {
     const code = spare.dataset.code;
     const name = spare.dataset.name;
 
-    const historyOption = createMenuOption('📜', 'Ver Histórico Completo', () => {
+    const historyOption = createMenuOption(icon('scroll'), 'Ver Histórico Completo', () => {
         showHistory(code);
         closeContextMenu();
     });
@@ -445,7 +445,7 @@ function showContextMenu(event) {
     menu.appendChild(createMenuSeparator());
 
     if (currentState !== 'DESCARTADO') {
-        const scanOption = createMenuOption('📸', 'Escanear QR Code', () => {
+        const scanOption = createMenuOption(icon('qrCode'), 'Escanear QR Code', () => {
             handleScan(spare, name, code);
             closeContextMenu();
         });
@@ -456,7 +456,7 @@ function showContextMenu(event) {
         menu.appendChild(createMenuSeparator());
 
         const equipName = spare.dataset.equip;
-        const removeOption = createMenuOption('🔧', 'Remover do Equipamento', () => {
+        const removeOption = createMenuOption(icon('wrench'), 'Remover do Equipamento', () => {
             if (state.equipmentState[equipName]) {
                 handleRemoval(equipName, state.equipmentState[equipName]);
             }
@@ -466,17 +466,17 @@ function showContextMenu(event) {
     }
 
     menu.appendChild(createMenuSeparator());
-    menu.appendChild(createMenuOption('✕', 'Cancelar', closeContextMenu));
+    menu.appendChild(createMenuOption(icon('x'), 'Cancelar', closeContextMenu));
 
     menu.style.left = event.pageX + 'px';
     menu.style.top = event.pageY + 'px';
     menu.classList.add('active');
 }
 
-function createMenuOption(icon, text, callback) {
+function createMenuOption(iconHtml, text, callback) {
     const option = document.createElement('div');
     option.className = 'context-menu-item';
-    option.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
+    option.innerHTML = `<span>${iconHtml}</span> <span>${text}</span>`;
     option.onclick = callback;
     return option;
 }

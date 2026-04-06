@@ -9,14 +9,14 @@ function showComplianceDetails() {
     if (state.nonComplianceList.length === 0) {
         content.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #00ff88;">
-                <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
+                <div style="font-size: 64px; margin-bottom: 20px;">${icon('checkCircle','4xl')}</div>
                 <h3>100% Conformidade</h3>
                 <p>Nenhuma não-conformidade detectada!</p>
             </div>
         `;
     } else {
         content.innerHTML = `
-            <h3 style="color: #ff4757; margin-bottom: 20px;">⚠️ Não-Conformidades Detectadas: ${state.nonComplianceList.length}</h3>
+            <h3 style="color: #ff4757; margin-bottom: 20px;">${icon('alertTriangle')} Não-Conformidades Detectadas: ${state.nonComplianceList.length}</h3>
             ${state.nonComplianceList.map((nc, index) => `
                 <div style="background: rgba(255, 71, 87, 0.1); border: 2px solid #ff4757; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                     <strong>#${index + 1} - ${nc.operation}</strong><br>
@@ -47,7 +47,7 @@ function showHistory(code) {
 
     const content = document.getElementById('historyContent');
     content.innerHTML = `
-        <h3 style="color: #00d4ff; margin-bottom: 20px;">${spare.icon} ${spare.name} (${spare.code})</h3>
+        <h3 style="color: #00d4ff; margin-bottom: 20px;">${icon(spare.icon)} ${spare.name} (${spare.code})</h3>
         <div style="margin-bottom: 20px;">
             <strong>Total de Escaneamentos:</strong> ${spare.scanCount}<br>
             <strong>Não-conformidades:</strong> ${spare.nonCompliantOps.length}
@@ -79,7 +79,7 @@ function showDisposalRecords() {
     if (state.disposalRecords.length === 0) {
         content.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #aaa;">
-                <div style="font-size: 64px; margin-bottom: 20px;">📦</div>
+                <div style="font-size: 64px; margin-bottom: 20px;">${icon('package','4xl')}</div>
                 <h3>Nenhum Descarte Registrado</h3>
                 <p>Todas as peças removidas retornaram ao estoque ou ainda estão instaladas.</p>
             </div>
@@ -90,7 +90,7 @@ function showDisposalRecords() {
 
         content.innerHTML = `
             <div style="background: rgba(255, 71, 87, 0.1); border: 2px solid #ff4757; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <h3 style="color: #ff4757; margin-bottom: 10px;">📊 Estatísticas</h3>
+                <h3 style="color: #ff4757; margin-bottom: 10px;">${icon('barChart')} Estatísticas</h3>
                 <strong>Total Descartado:</strong> ${state.disposalRecords.length} peça(s)<br>
                 <strong>Horas Trabalhadas Total:</strong> ${totalHoursWorked.toFixed(1)}h<br>
                 <strong>Média por Peça:</strong> ${avgHours}h
@@ -124,14 +124,14 @@ function closeDisposalModal() {
 // ===== LOGÍSTICA REVERSA =====
 function showDisposalTransport() {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
-        alert('⚠️ ACESSO NEGADO\n\nApenas TRANSPORTADORA pode processar logística reversa.');
+        alert('ACESSO NEGADO\n\nApenas TRANSPORTADORA pode processar logística reversa.');
         return;
     }
 
     const itemsInQuarantine = document.querySelectorAll('#quarantineList .spare-item');
 
     if (itemsInQuarantine.length === 0) {
-        alert('ℹ️ NENHUM ITEM\n\nNão há peças na quarentena para coleta.');
+        alert('NENHUM ITEM\n\nNão há peças na quarentena para coleta.');
         return;
     }
 
@@ -140,7 +140,7 @@ function showDisposalTransport() {
     ).join('\n');
 
     const proceed = confirm(
-        `🚚 LOGÍSTICA REVERSA\n\n` +
+        `LOGÍSTICA REVERSA\n\n` +
         `Itens na quarentena:\n${itemsList}\n\n` +
         `Total: ${itemsInQuarantine.length} item(ns)\n\n` +
         `Confirma COLETA para DESCARTE definitivo?\n` +
@@ -194,7 +194,7 @@ function showDisposalTransport() {
     state.quarantineItems = [];
 
     addLog(
-        `🚚 LOGÍSTICA REVERSA: ${processedItems.length} item(ns) coletado(s) | ` +
+        `${icon('truck')} LOGÍSTICA REVERSA: ${processedItems.length} item(ns) coletado(s) | ` +
         `Doc: ${disposalDoc} | ${transportOperator} (${transportCompany})`,
         'danger'
     );
@@ -210,26 +210,26 @@ function showDisposalDocument(docNumber, items) {
 
     content.innerHTML = `
         <div style="background: rgba(0, 0, 0, 0.8); border: 3px solid #00d4ff; border-radius: 10px; padding: 25px; margin-bottom: 20px;">
-            <h2 style="color: #00d4ff; text-align: center; margin-bottom: 20px;">📄 DOCUMENTO DE DESCARTE</h2>
+            <h2 style="color: #00d4ff; text-align: center; margin-bottom: 20px;">${icon('fileText')} DOCUMENTO DE DESCARTE</h2>
             <div style="text-align: center; font-size: 32px; font-weight: bold; color: #ffa502; margin: 20px 0; padding: 15px; background: rgba(255, 165, 2, 0.1); border-radius: 8px;">
                 ${docNumber}
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                 <div>
-                    <strong>📅 Data/Hora:</strong><br>
+                    <strong>${icon('calendar')} Data/Hora:</strong><br>
                     ${new Date(items[0].collectionDate).toLocaleString('pt-BR')}
                 </div>
                 <div>
-                    <strong>🚚 Transportadora:</strong><br>
+                    <strong>${icon('truck')} Transportadora:</strong><br>
                     ${items[0].transportCompany}
                 </div>
                 <div>
-                    <strong>👤 Operador:</strong><br>
+                    <strong>${icon('user')} Operador:</strong><br>
                     ${items[0].transportOperator}
                 </div>
                 <div>
-                    <strong>📦 Total Itens:</strong><br>
+                    <strong>${icon('package')} Total Itens:</strong><br>
                     ${items.length} peça(s)
                 </div>
             </div>
@@ -238,7 +238,7 @@ function showDisposalDocument(docNumber, items) {
         <h3 style="color: #ff4757; margin: 20px 0;">ITENS DESCARTADOS</h3>
 
         <div style="background: rgba(255, 71, 87, 0.05); border: 2px solid #ff4757; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-            <strong>⏱️ Horas Totais Trabalhadas:</strong> ${totalHours.toFixed(1)}h
+            <strong>${icon('history')} Horas Totais Trabalhadas:</strong> ${totalHours.toFixed(1)}h
         </div>
 
         ${items.map((item, index) => `
@@ -262,7 +262,7 @@ function showDisposalDocument(docNumber, items) {
         `).join('')}
 
         <div style="margin-top: 30px; padding: 20px; background: rgba(0, 212, 255, 0.1); border: 2px solid #00d4ff; border-radius: 8px; text-align: center;">
-            <strong style="color: #00d4ff;">✓ DOCUMENTO REGISTRADO NA BLOCKCHAIN</strong><br>
+            <strong style="color: #00d4ff;">${icon('checkCircle')} DOCUMENTO REGISTRADO NA BLOCKCHAIN</strong><br>
             <small>Este documento é imutável e auditável permanentemente</small>
         </div>
     `;
