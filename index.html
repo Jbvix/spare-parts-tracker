@@ -178,7 +178,18 @@
                 <div class="user-badge" id="userBadge">
                     <span id="displayUserName"></span> | <span id="displayUserRole"></span>
                 </div>
-                <button class="logout-btn" onclick="logout()">Sair</button>
+                <button class="logout-btn" onclick="showRoleSwitchModal()">Trocar de Tela</button>
+                <!-- Modal de Troca de Tela -->
+                <div id="roleSwitchModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+                    <div style="background:#fff; border-radius:10px; padding:32px 24px; max-width:350px; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.18); text-align:center;">
+                        <h3 style="margin-bottom:18px; color:#00b894;">Trocar de Tela</h3>
+                        <p style="color:#888; margin-bottom:20px;">Escolha o papel para visualizar:</p>
+                        <button class="logout-btn" style="margin-bottom:10px; width:100%;" onclick="switchRole('CHEFE_MAQ')">Chefe de Máquinas</button>
+                        <button class="logout-btn" style="margin-bottom:10px; width:100%; background:linear-gradient(135deg,#ffa502 0%,#ff6348 100%);" onclick="switchRole('TRANSPORTADORA')">Transportadora</button>
+                        <button class="logout-btn" style="width:100%; background:linear-gradient(135deg,#00d4ff 0%,#0984e3 100%);" onclick="switchRole('ALMOX')">Almoxarifado</button>
+                        <button class="logout-btn" style="margin-top:18px; background:#eee; color:#333; width:100%;" onclick="closeRoleSwitchModal()">Cancelar</button>
+                    </div>
+                </div>
             </div>
         </div>
 

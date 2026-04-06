@@ -183,3 +183,27 @@ document.addEventListener('dragover', function (e) {
         }
     });
 });
+
+// Modal de troca de tela
+function showRoleSwitchModal() {
+    document.getElementById('roleSwitchModal').style.display = 'flex';
+}
+function closeRoleSwitchModal() {
+    document.getElementById('roleSwitchModal').style.display = 'none';
+}
+
+// Troca de papel sem sair para tela de login
+function switchRole(newRole) {
+    // Mantém nome e localização atuais
+    const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser'));
+    if (!user) return;
+    user.role = newRole;
+    state.currentUser = user;
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    document.getElementById('displayUserRole').textContent = getRoleName(newRole);
+    closeRoleSwitchModal();
+    initializeInterface();
+    showRoleInstructions();
+    updateDashboard();
+    addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
+}

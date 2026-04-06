@@ -179,6 +179,23 @@ function createQuarantinePanel() {
     return panel;
 }
 
+// ===== PAINEL DE PEÇAS EM TRÂNSITO (VISÍVEL PARA CHEFE DE MÁQUINAS) =====
+function createInTransitPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.innerHTML = `
+        <div class="panel-header" style="border-bottom-color: #ffa502;">
+            <span class="panel-icon">${icon('truck')}</span>
+            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>
+        </div>
+        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
+            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.
+        </p>
+        <div id="inTransitForBordo" style="min-height: 40px;"></div>
+    `;
+    return panel;
+}
+
 // ===== INSTRUÇÕES POR PAPEL =====
 function showRoleInstructions() {
     if (!state.currentUser) return;
@@ -320,7 +337,8 @@ function placeSpareElement(spareDiv) {
     if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
         target = document.getElementById('sparesList');
     } else if (stateName === 'EM_TRANSITO') {
-        target = document.getElementById('transportInTransit');
+        // Transportadora vê em 'transportInTransit', Chefe de Máquinas vê em 'inTransitForBordo'
+        target = document.getElementById('transportInTransit') || document.getElementById('inTransitForBordo');
     } else if (stateName === 'ENTREGUE_BORDO') {
         target = document.getElementById('bordoList');
     } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
