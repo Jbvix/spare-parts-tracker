@@ -474,6 +474,16 @@ function updateComplianceGrid() {
     `).join('');
 }
 
+// ===== ESTADOS VISÍVEIS POR PAPEL =====
+// Define quais estados cada papel enxerga. null = todos.
+const ROLE_VISIBLE_STATES = {
+    'ALMOX':          ['RECEBIDO', 'ESCANEADO', 'AGUARDANDO_COLETA'],
+    'TRANSPORTADORA': ['RECEBIDO', 'ESCANEADO', 'AGUARDANDO_COLETA', 'EM_TRANSITO', 'QUARENTENA'],
+    'CHEFE_MAQ':      ['EM_TRANSITO', 'ENTREGUE_BORDO', 'ARMAZENADO', 'INSTALADO',
+                       'QUARENTENA', 'REMOVIDO', 'NAO_CONFORME'],
+    'AUDITOR':        null
+};
+
 // ===== INICIALIZAÇÃO DE PEÇAS =====
 function initializeSpares() {
     ensureSparesData();
@@ -482,10 +492,19 @@ function initializeSpares() {
         try {
             state.sparesData = JSON.parse(savedSpares);
             if (!state.sparesData || typeof state.sparesData !== 'object') state.sparesData = {};
+
+            const role = state.currentUser ? state.currentUser.role : null;
+            const visibleStates = role ? ROLE_VISIBLE_STATES[role] : null;
+
+            let total = 0;
             for (let code in state.sparesData) {
-                recreateSpareElement(state.sparesData[code]);
+                const spare = state.sparesData[code];
+                // Filtra peças que não pertencem a esta view
+                if (visibleStates && !visibleStates.includes(spare.currentState)) continue;
+                recreateSpareElement(spare);
+                total++;
             }
-            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
+            addLog(`${icon('refresh')} ${total} peça(s) carregada(s) para view ${role || 'SISTEMA'}`, 'success');
         } catch (e) { console.error('Erro ao carregar peças:', e); state.sparesData = {}; }
     }
     updateDashboard();
