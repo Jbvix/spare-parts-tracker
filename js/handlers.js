@@ -103,34 +103,25 @@ function handleTransportCollect(element, name, code, currentState) {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
         alert('ACESSO NEGADO\n\nApenas TRANSPORTADORA pode coletar peças.');
         return;
-
-    } else {
-        // Se coleta for conforme, remove flag de não-conformidade
-        element.classList.remove('non-compliant');
-        const warn = element.querySelector('.spare-warning');
-        if (warn) warn.remove();
     }
-
-    if (currentState !== 'ESCANEADO') {
-        const nonCompliance = {
-            spare: code,
-            operation: 'COLETA',
-            operator: state.currentUser.name,
-            timestamp: new Date().toISOString(),
-            reason: 'Coleta sem escaneamento prévio'
-        };
-
-        state.nonComplianceList.push(nonCompliance);
-        state.sparesData[code].nonCompliantOps.push(nonCompliance);
-
-        element.classList.add('non-compliant');
-        const warning = document.createElement('div');
-        warning.className = 'spare-warning';
-        warning.textContent = '!';
-        element.appendChild(warning);
-
-        addLog(`${icon('alertTriangle')} NÃO-CONFORMIDADE: ${name} coletado SEM escaneamento por ${state.currentUser.name}`, 'danger');
+    // Só pode coletar se a peça estiver AGUARDANDO_COLETA
+    if (currentState !== 'AGUARDANDO_COLETA') {
+        alert('Só é possível coletar peças que tiveram registro de saída pelo Almoxarifado!');
+        return;
     }
+    // Remove flag de não-conformidade se presente
+    element.classList.remove('non-compliant');
+    const warn = element.querySelector('.spare-warning');
+    if (warn) warn.remove();
+
+    // Atualiza histórico de transporte
+    if (!state.sparesData[code].transportEvents) state.sparesData[code].transportEvents = [];
+    state.sparesData[code].transportEvents.push({
+        type: 'COLETA_TRANSPORTADORA',
+        operator: state.currentUser.name,
+        company: state.currentUser.location,
+        timestamp: new Date().toISOString()
+    });
 
     const targetDiv = document.getElementById('transportInTransit');
     if (targetDiv) targetDiv.appendChild(element);
@@ -145,7 +136,7 @@ function handleTransportCollect(element, name, code, currentState) {
     addSpareEvent(code, 'COLETADO', {
         operator: state.currentUser.name,
         company: state.currentUser.location,
-        scanned: currentState === 'ESCANEADO'
+        scanned: true
     });
 
     saveAll();

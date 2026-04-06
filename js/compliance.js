@@ -53,6 +53,7 @@ function showHistory(code) {
     };
 
     content.innerHTML = `
+        <button class="action-btn" style="float:right;margin-bottom:10px;" onclick="exportHistory('${code}')">${icon('download')} Exportar Histórico</button>
         <h3 style="color: #00d4ff; margin-bottom: 20px;">${icon(spare.icon)} ${escapeHtml(spare.name)} (${escapeHtml(spare.code)})</h3>
         <div style="margin-bottom: 20px;">
             <strong>Total de Escaneamentos:</strong> ${spare.scanCount}<br>
@@ -68,6 +69,20 @@ function showHistory(code) {
                     ).join('<br>')}
                 </div>
             `).join('')}
+            ${(spare.transportEvents && spare.transportEvents.length > 0) ? `
+                <h4 style='margin-top:20px;color:#ffa502;'>${icon('truck')} RASTREAMENTO LOGÍSTICO</h4>
+                ${spare.transportEvents.map(ev => `
+                    <div class='history-item'>
+                        <strong>${escapeHtml(ev.type)}</strong><br>
+                        <small>${ev.timestamp ? new Date(ev.timestamp).toLocaleString('pt-BR') : (ev.datetime ? new Date(ev.datetime).toLocaleString('pt-BR') : '')}</small><br>
+                        Operador: ${escapeHtml(ev.operator || '-')}, Empresa: ${escapeHtml(ev.company || '-')}
+                        ${ev.name ? `<br>Nome: ${escapeHtml(ev.name)}` : ''}
+                        ${ev.doc ? `<br>Documento: ${escapeHtml(ev.doc)}` : ''}
+                        ${ev.vehicle ? `<br>Veículo: ${escapeHtml(ev.vehicle)}` : ''}
+                        ${ev.contact ? `<br>Contato: ${escapeHtml(ev.contact)}` : ''}
+                    </div>
+                `).join('')}
+            ` : ''}
         </div>
     `;
 
@@ -75,6 +90,27 @@ function showHistory(code) {
 }
 
 function closeHistoryModal() {
+    // Exporta histórico e rastreamento logístico da peça em JSON
+    function exportHistory(code) {
+        const spare = state.sparesData[code];
+        if (!spare) return;
+        const exportObj = {
+            code: spare.code,
+            name: spare.name,
+            icon: spare.icon,
+            scanCount: spare.scanCount,
+            nonCompliantOps: spare.nonCompliantOps,
+            history: spare.history,
+            transportEvents: spare.transportEvents || []
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `historico_${spare.code}.json`);
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        document.body.removeChild(dlAnchor);
+    }
     document.getElementById('historyModal').classList.remove('active');
 }
 

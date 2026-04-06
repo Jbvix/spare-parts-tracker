@@ -41,6 +41,23 @@ function createAlmoxPanel() {
             <div id="sparesList"></div>
             ${state.currentUser.role === 'ALMOX' ? '<button class="action-btn" onclick="addSpare()">' + icon('plus') + ' Receber Peça</button>' : ''}
         </div>
+        <div id="registerTransporterModal" class="modal" style="display:none; z-index:9999;">
+            <div class="modal-content" style="max-width:400px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Registrar Transportador</h2>
+                    <button class="modal-close" onclick="closeRegisterTransporterModal()">✕</button>
+                </div>
+                <form id="transporterForm" onsubmit="submitTransporterForm(event)">
+                    <label>Nome do Transportador:<input type="text" id="transpName" required></label><br>
+                    <label>Documento:<input type="text" id="transpDoc" required></label><br>
+                    <label>Empresa:<input type="text" id="transpCompany" required></label><br>
+                    <label>Veículo:<input type="text" id="transpVehicle" required></label><br>
+                    <label>Contato:<input type="text" id="transpContact" required></label><br>
+                    <input type="hidden" id="transpPartCode">
+                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Saída</button>
+                </form>
+            </div>
+        </div>
     `;
     return panel;
 }
@@ -348,7 +365,37 @@ function recreateSpareElement(spare) {
             <div class="spare-status">Estado: ${escapeHtml(spare.currentState || 'RECEBIDO')} | Scans: ${spare.scanCount || 0}</div>
         </div>
         ${spare.nonCompliantOps && spare.nonCompliantOps.length > 0 ? '<div class="spare-warning">!</div>' : ''}
+        ${(state.currentUser.role === 'ALMOX' && (spare.currentState === 'RECEBIDO' || spare.currentState === 'ESCANEADO')) ? `<button class='action-btn' style='margin-top:6px;' onclick='openRegisterTransporterModal("${spare.code}")'>${icon('truck')} Registrar Saída/Transportador</button>` : ''}
+        ${(state.currentUser.role === 'TRANSPORTADORA' && spare.currentState === 'EM_TRANSITO') ? `<button class='action-btn' style='margin-top:6px;' onclick='openArrivalModal("${spare.code}")'>${icon('clock')} Registrar Chegada no Destino</button><button class='action-btn' style='margin-top:6px;' onclick='openDeliveryModal("${spare.code}")'>${icon('upload')} Registrar Entrega a Bordo</button>` : ''}
     `;
+        <!-- Modal Chegada no Destino -->
+        <div id="arrivalModal" class="modal" style="display:none; z-index:9999;">
+            <div class="modal-content" style="max-width:400px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Registrar Chegada no Destino</h2>
+                    <button class="modal-close" onclick="closeArrivalModal()">✕</button>
+                </div>
+                <form id="arrivalForm" onsubmit="submitArrivalForm(event)">
+                    <label>Data/Hora de Chegada:<input type="datetime-local" id="arrivalDatetime" required></label><br>
+                    <input type="hidden" id="arrivalPartCode">
+                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Chegada</button>
+                </form>
+            </div>
+        </div>
+        <!-- Modal Entrega a Bordo -->
+        <div id="deliveryModal" class="modal" style="display:none; z-index:9999;">
+            <div class="modal-content" style="max-width:400px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Registrar Entrega a Bordo</h2>
+                    <button class="modal-close" onclick="closeDeliveryModal()">✕</button>
+                </div>
+                <form id="deliveryForm" onsubmit="submitDeliveryForm(event)">
+                    <label>Data/Hora de Entrega:<input type="datetime-local" id="deliveryDatetime" required></label><br>
+                    <input type="hidden" id="deliveryPartCode">
+                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Entrega</button>
+                </form>
+            </div>
+        </div>
 
     spareDiv.addEventListener('dragstart', drag);
     spareDiv.addEventListener('contextmenu', showContextMenu);

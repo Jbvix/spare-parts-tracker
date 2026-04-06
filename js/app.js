@@ -294,6 +294,12 @@ if (typeof switchRole === 'function') {
     };
 }
 
+// Força logout e volta para tela de login ao trocar de papel
+function forceLogoutToSwitchRole() {
+    localStorage.removeItem('currentUser');
+    location.reload();
+}
+
 // [AUTO-RESET] Limpa o localStorage e recarrega ao iniciar para garantir ambiente limpo
 (function() {
     try {
