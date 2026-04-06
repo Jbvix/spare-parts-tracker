@@ -333,11 +333,10 @@ function recreateSpareElement(spare) {
 function placeSpareElement(spareDiv) {
     const stateName = spareDiv.dataset.state || 'RECEBIDO';
     let target = null;
-
     if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
         target = document.getElementById('sparesList');
     } else if (stateName === 'EM_TRANSITO') {
-        // Transportadora vê em 'transportInTransit', Chefe de Máquinas vê em 'inTransitForBordo'
+        // Sempre tenta painel de trânsito do bordo se existir
         target = document.getElementById('transportInTransit') || document.getElementById('inTransitForBordo');
     } else if (stateName === 'ENTREGUE_BORDO') {
         target = document.getElementById('bordoList');
@@ -352,7 +351,6 @@ function placeSpareElement(spareDiv) {
     } else if (stateName === 'DESCARTADO_FINAL') {
         return;
     }
-
     if (target) target.appendChild(spareDiv);
 }
 
@@ -573,3 +571,65 @@ function initializeSpares() {
 
     updateDashboard();
 }
+
+// Garante que o painel de trânsito está disponível antes de popular as peças
+const originalInitializeInterface = initializeInterface;
+initializeInterface = function() {
+    const panelsGrid = document.getElementById('panelsGrid');
+    panelsGrid.innerHTML = '';
+    const role = state.currentUser.role;
+    panelsGrid.appendChild(createScannerPanel());
+    if (role === 'ALMOX') {
+        panelsGrid.appendChild(createAlmoxPanel());
+    } else if (role === 'TRANSPORTADORA') {
+        panelsGrid.appendChild(createAlmoxPanel());
+        panelsGrid.appendChild(createTransportadoraCollectPanel());
+        panelsGrid.appendChild(createTransportadoraDeliverPanel());
+        panelsGrid.appendChild(createQuarantinePanel());
+    } else if (role === 'CHEFE_MAQ') {
+        // Cria painel de trânsito ANTES de inicializar as peças
+        panelsGrid.appendChild(createInTransitPanel());
+        panelsGrid.appendChild(createTransportadoraCollectPanel());
+        panelsGrid.appendChild(createBordoPanel());
+        panelsGrid.appendChild(createEquipmentPanel());
+        panelsGrid.appendChild(createShelfPanel());
+        panelsGrid.appendChild(createQuarantinePanel());
+    } else if (role === 'AUDITOR') {
+        panelsGrid.appendChild(createAlmoxPanel());
+        panelsGrid.appendChild(createTransportadoraCollectPanel());
+        panelsGrid.appendChild(createTransportadoraDeliverPanel());
+        panelsGrid.appendChild(createBordoPanel());
+        panelsGrid.appendChild(createEquipmentPanel());
+        panelsGrid.appendChild(createQuarantinePanel());
+    }
+    // Só depois de todos os painéis
+    setTimeout(() => {
+        initializeSpares();
+    }, 0);
+};
+
+// placeSpareElement robusto para EM_TRANSITO
+const originalPlaceSpareElement = placeSpareElement;
+placeSpareElement = function(spareDiv) {
+    const stateName = spareDiv.dataset.state || 'RECEBIDO';
+    let target = null;
+    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
+        target = document.getElementById('sparesList');
+    } else if (stateName === 'EM_TRANSITO') {
+        // Sempre tenta painel de trânsito do bordo se existir
+        target = document.getElementById('transportInTransit') || document.getElementById('inTransitForBordo');
+    } else if (stateName === 'ENTREGUE_BORDO') {
+        target = document.getElementById('bordoList');
+    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
+        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
+        const shelfSlot = target ? target.closest('.shelf-slot') : null;
+        if (shelfSlot) shelfSlot.classList.add('occupied');
+    } else if (stateName === 'INSTALADO') {
+        target = ensureSpareStagingArea();
+    } else if (stateName === 'QUARENTENA') {
+        target = document.getElementById('quarantineList');
+    } else if (stateName === 'DESCARTADO_FINAL') {
+        return;
+    }
+    if (target) target.appendChild(spareDiv);
+};
