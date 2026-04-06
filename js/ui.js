@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — UI (Criação de Painéis e Elementos)
+ * SPARES-CHAIN v6.3 — UI (Criação de Painéis e Elementos)
  */
 
 // ===== CRIAÇÃO DE PAINÉIS =====
@@ -83,6 +83,25 @@ function createTransportadoraDeliverPanel() {
     return panel;
 }
 
+function createBordoPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.innerHTML = `
+        <div class="panel-header">
+            <span class="panel-icon">${icon('ship')}</span>
+            <span class="panel-title">RECEBIMENTO A BORDO</span>
+        </div>
+        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
+            Peças entregues pela transportadora aguardando conferência, armazenamento ou instalação.
+        </p>
+        <div id="bordo" class="drop-zone">
+            <p>${icon('package')} ESTOQUE DE BORDO</p>
+            <div id="bordoList" style="margin-top: 15px;"></div>
+        </div>
+    `;
+    return panel;
+}
+
 function createEquipmentPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
@@ -137,7 +156,7 @@ function createQuarantinePanel() {
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
             ${state.currentUser.role === 'CHEFE_MAQ' ? 
-                'Peças REMOVIDAS aguardam logística reversa. Arraste apenas peças REMOVIDAS.' : 
+                'Peças removidas ficam em quarentena aguardando logística reversa.' : 
                 state.currentUser.role === 'TRANSPORTADORA' ?
                 'Colete resíduos para descarte. Gera documento de descarte automático.' :
                 'Peças removidas aguardando coleta pela transportadora.'}
@@ -258,10 +277,13 @@ function recreateSpareElement(spare) {
     spareDiv.dataset.code = spare.code;
     spareDiv.dataset.state = spare.currentState || 'RECEBIDO';
     spareDiv.dataset.scanCount = spare.scanCount || '0';
+    if (spare.lastScan) spareDiv.dataset.lastScan = spare.lastScan;
+    if (spare.transportadora) spareDiv.dataset.transportadora = spare.transportadora;
+    if (spare.shelf) spareDiv.dataset.shelf = spare.shelf;
 
     if (spare.currentState === 'INSTALADO') spareDiv.classList.add('installed');
     else if (spare.currentState === 'EM_TRANSITO') spareDiv.classList.add('in-transit');
-    else if (spare.currentState === 'REMOVIDO') spareDiv.classList.add('removed');
+    else if (spare.currentState === 'REMOVIDO' || spare.currentState === 'QUARENTENA') spareDiv.classList.add('removed');
 
     if (spare.nonCompliantOps && spare.nonCompliantOps.length > 0) {
         spareDiv.classList.add('non-compliant');
@@ -280,8 +302,48 @@ function recreateSpareElement(spare) {
     spareDiv.addEventListener('dragstart', drag);
     spareDiv.addEventListener('contextmenu', showContextMenu);
 
-    const sparesList = document.getElementById('sparesList');
-    if (sparesList) sparesList.appendChild(spareDiv);
+    placeSpareElement(spareDiv);
+}
+
+function placeSpareElement(spareDiv) {
+    const stateName = spareDiv.dataset.state || 'RECEBIDO';
+    let target = null;
+
+    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
+        target = document.getElementById('sparesList');
+    } else if (stateName === 'EM_TRANSITO') {
+        target = document.getElementById('transportInTransit');
+    } else if (stateName === 'ENTREGUE_BORDO') {
+        target = document.getElementById('bordoList');
+    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
+        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
+        const shelfSlot = target ? target.closest('.shelf-slot') : null;
+        if (shelfSlot) shelfSlot.classList.add('occupied');
+    } else if (stateName === 'INSTALADO') {
+        target = ensureSpareStagingArea();
+    } else if (stateName === 'QUARENTENA') {
+        target = document.getElementById('quarantineList');
+    } else if (stateName === 'DESCARTADO_FINAL') {
+        return;
+    }
+
+    if (target) target.appendChild(spareDiv);
+}
+
+function ensureSpareStagingArea() {
+    let staging = document.getElementById('spareStaging');
+    if (staging) return staging;
+
+    staging = document.createElement('div');
+    staging.id = 'spareStaging';
+    staging.className = 'hidden';
+
+    const mainInterface = document.getElementById('mainInterface');
+    if (mainInterface) {
+        mainInterface.appendChild(staging);
+    }
+
+    return staging;
 }
 
 function restoreInstalledPart(equipName, installedData) {
@@ -323,10 +385,14 @@ function addSpare() {
         return;
     }
 
-    const spareName = prompt('Nome da peça:');
-    if (!spareName) return;
 
-    const spareCode = `SP-2025-${String(state.spareCounter).padStart(3, '0')}`;
+    const spareName = prompt('Nome da peça:');
+    if (!spareName || !spareName.trim() || spareName.length < 3) {
+        alert('Nome da peça inválido.');
+        return;
+    }
+
+    const spareCode = `SP-${new Date().getFullYear()}-${String(state.spareCounter).padStart(3, '0')}`;
     state.spareCounter++;
     localStorage.setItem('spareCounter', state.spareCounter);
 
@@ -401,9 +467,9 @@ function updateComplianceGrid() {
     const recent = state.nonComplianceList.slice(-3);
     grid.innerHTML = recent.map(nc => `
         <div class="compliance-item critical">
-            <strong>${nc.operation}</strong><br>
-            <small>${nc.spare} | ${nc.operator}</small><br>
-            <small style="color: #ff4757;">${nc.reason}</small>
+            <strong>${escapeHtml(nc.operation)}</strong><br>
+            <small>${escapeHtml(nc.spare)} | ${escapeHtml(nc.operator)}</small><br>
+            <small style="color: #ff4757;">${escapeHtml(nc.reason)}</small>
         </div>
     `).join('');
 }

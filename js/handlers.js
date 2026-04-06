@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — Handlers (Drag & Drop, Ações, Menu de Contexto)
+ * SPARES-CHAIN v6.3 — Handlers (Drag & Drop, Ações, Menu de Contexto)
  */
 
 // ===== DRAG AND DROP =====
@@ -47,6 +47,12 @@ function drop(event) {
 
 // ===== ESCANEAMENTO =====
 function handleScan(element, name, code) {
+
+    // Impede scan por Auditor
+    if (!['ALMOX', 'TRANSPORTADORA', 'CHEFE_MAQ'].includes(state.currentUser?.role)) {
+        alert('ACESSO NEGADO\n\nApenas Almoxarife, Transportadora ou Chefe de Máquinas podem escanear peças.');
+        return;
+    }
     const currentState = element.dataset.state;
     const scanCount = parseInt(element.dataset.scanCount || 0);
 
@@ -59,7 +65,12 @@ function handleScan(element, name, code) {
         addLog(`${icon('checkCircle')} VALIDADO: QR autêntico | Assinatura: OK | Estado: ${currentState}`, 'success');
     }, 600);
 
+
     element.dataset.state = 'ESCANEADO';
+    // Remove flag de não-conformidade se presente
+    element.classList.remove('non-compliant');
+    const warn = element.querySelector('.spare-warning');
+    if (warn) warn.remove();
     updateSpareStatus(element);
 
     addSpareEvent(code, 'ESCANEADO', {
@@ -83,6 +94,12 @@ function handleTransportCollect(element, name, code, currentState) {
     if (state.currentUser.role !== 'TRANSPORTADORA') {
         alert('ACESSO NEGADO\n\nApenas TRANSPORTADORA pode coletar peças.');
         return;
+
+    } else {
+        // Se coleta for conforme, remove flag de não-conformidade
+        element.classList.remove('non-compliant');
+        const warn = element.querySelector('.spare-warning');
+        if (warn) warn.remove();
     }
 
     if (currentState !== 'ESCANEADO') {
@@ -179,8 +196,21 @@ function handleTransportDeliver(element, name, code, currentState) {
 function handleInstallation(element, equipSlot, name, code, currentState) {
     const equipName = equipSlot.dataset.equip;
 
+    if (state.currentUser?.role !== 'CHEFE_MAQ') {
+        alert('ACESSO NEGADO\n\nApenas CHEFE DE MÁQUINAS pode instalar peças.');
+        return;
+    }
+
     if (currentState !== 'ESCANEADO' && currentState !== 'ENTREGUE_BORDO') {
         alert('ATENÇÃO\n\nEscanear peça antes de instalar é OBRIGATÓRIO para conformidade.');
+        return;
+    }
+
+
+    // Impede instalação duplicada da mesma peça em múltiplos equipamentos
+    const alreadyInstalledEquip = Object.entries(state.equipmentState).find(([eq, data]) => data.code === code);
+    if (alreadyInstalledEquip) {
+        alert(`NÃO PERMITIDO\n\nEsta peça já está instalada em outro equipamento (${alreadyInstalledEquip[0]}). Remova antes de instalar em outro.`);
         return;
     }
 
@@ -238,6 +268,11 @@ function handleInstallation(element, equipSlot, name, code, currentState) {
 
 // ===== REMOÇÃO =====
 function handleRemoval(equipName, installedData) {
+    if (state.currentUser?.role !== 'CHEFE_MAQ') {
+        alert('ACESSO NEGADO\n\nApenas CHEFE DE MÁQUINAS pode remover peças de equipamentos.');
+        return;
+    }
+
     const code = installedData.code;
     const name = installedData.name;
 
@@ -260,10 +295,20 @@ function handleRemoval(equipName, installedData) {
     };
     const reasonText = reasons[reason] || 'Não especificado';
 
-    const removalHours = prompt(`Horas do equipamento na REMOÇÃO:`, '12500.0');
-    if (!removalHours) return;
 
-    const hoursWorked = parseFloat(removalHours) - installedData.hours;
+    let removalHours = prompt(`Horas do equipamento na REMOÇÃO:`, '12500.0');
+    if (!removalHours) return;
+    removalHours = parseFloat(removalHours);
+    if (isNaN(removalHours)) {
+        alert('Valor de horas inválido.');
+        return;
+    }
+    if (removalHours < installedData.hours) {
+        alert('Horas de remoção não podem ser menores que as horas de instalação!');
+        return;
+    }
+
+    const hoursWorked = removalHours - installedData.hours;
 
     const willDispose = confirm(
         `Peça removida: ${name}\n` +
@@ -300,6 +345,9 @@ function handleRemoval(equipName, installedData) {
             elementToMove.dataset.state = 'QUARENTENA';
             elementToMove.classList.remove('installed');
             elementToMove.classList.add('removed');
+            if (state.sparesData[code]) {
+                state.sparesData[code].currentState = 'QUARENTENA';
+            }
 
             const quarantineList = document.getElementById('quarantineList');
             if (quarantineList) {
@@ -353,6 +401,9 @@ function handleRemoval(equipName, installedData) {
             elementToMove.dataset.state = 'RECEBIDO';
             elementToMove.classList.remove('installed');
             elementToMove.classList.remove('removed');
+            if (state.sparesData[code]) {
+                state.sparesData[code].currentState = 'RECEBIDO';
+            }
 
             const sparesList = document.getElementById('sparesList');
             if (sparesList) sparesList.appendChild(elementToMove);
@@ -372,6 +423,11 @@ function handleRemoval(equipName, installedData) {
 
 // ===== ARMAZENAMENTO EM PRATELEIRA =====
 function handleShelfStorage(element, shelfSlot, name, code) {
+    if (state.currentUser?.role !== 'CHEFE_MAQ') {
+        alert('ACESSO NEGADO\n\nApenas CHEFE DE MÁQUINAS pode armazenar peças em prateleiras.');
+        return;
+    }
+
     const shelfId = shelfSlot.dataset.shelf;
 
     const targetDiv = shelfSlot.querySelector('div:last-child');
@@ -393,7 +449,12 @@ function handleShelfStorage(element, shelfSlot, name, code) {
 
 // ===== QUARENTENA =====
 function handleQuarantineDrop(element, name, code, currentState) {
-    if (currentState !== 'REMOVIDO') {
+    if (state.currentUser?.role !== 'CHEFE_MAQ') {
+        alert('ACESSO NEGADO\n\nApenas CHEFE DE MÁQUINAS pode enviar peças para a quarentena.');
+        return;
+    }
+
+    if (currentState !== 'REMOVIDO' && currentState !== 'QUARENTENA') {
         alert('ACESSO NEGADO\n\nApenas peças REMOVIDAS podem ir para a QUARENTENA.\n\nPrimeiro remova a peça do equipamento.');
         return;
     }
@@ -405,14 +466,17 @@ function handleQuarantineDrop(element, name, code, currentState) {
     element.classList.add('removed');
     updateSpareStatus(element);
 
-    const quarantineItem = {
-        code, name,
-        addedBy: state.currentUser ? state.currentUser.name : 'Sistema',
-        addedDate: new Date().toISOString(),
-        removalData: state.sparesData[code] ? state.sparesData[code].history.find(h => h.type === 'REMOVIDO') : null
-    };
+    const alreadyTracked = state.quarantineItems.some(item => item.code === code);
+    if (!alreadyTracked) {
+        const quarantineItem = {
+            code, name,
+            addedBy: state.currentUser ? state.currentUser.name : 'Sistema',
+            addedDate: new Date().toISOString(),
+            removalData: state.sparesData[code] ? state.sparesData[code].history.find(h => h.type === 'REMOVIDO') : null
+        };
 
-    state.quarantineItems.push(quarantineItem);
+        state.quarantineItems.push(quarantineItem);
+    }
 
     const operator = state.currentUser ? state.currentUser.name : 'Operador';
     addLog(`${icon('alertTriangle')} QUARENTENA: ${name} movido para zona de quarentena | ${operator}`, 'warning');

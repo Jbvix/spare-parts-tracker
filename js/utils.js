@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — Utilitários
+ * SPARES-CHAIN v6.3 — Utilitários
  * Funções auxiliares reutilizáveis em todo o sistema.
  */
 

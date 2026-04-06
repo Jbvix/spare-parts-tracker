@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — App (Bootstrap / Inicialização)
+ * SPARES-CHAIN v6.3 — App (Bootstrap / Inicialização)
  * Carregado após: utils.js, store.js, ui.js, handlers.js, compliance.js
  */
 
@@ -136,7 +136,7 @@ function initializeInterface() {
         panelsGrid.appendChild(createTransportadoraDeliverPanel());
         panelsGrid.appendChild(createQuarantinePanel());
     } else if (role === 'CHEFE_MAQ') {
-        panelsGrid.appendChild(createAlmoxPanel());
+        panelsGrid.appendChild(createBordoPanel());
         panelsGrid.appendChild(createEquipmentPanel());
         panelsGrid.appendChild(createShelfPanel());
         panelsGrid.appendChild(createQuarantinePanel());
@@ -144,6 +144,7 @@ function initializeInterface() {
         panelsGrid.appendChild(createAlmoxPanel());
         panelsGrid.appendChild(createTransportadoraCollectPanel());
         panelsGrid.appendChild(createTransportadoraDeliverPanel());
+        panelsGrid.appendChild(createBordoPanel());
         panelsGrid.appendChild(createEquipmentPanel());
         panelsGrid.appendChild(createQuarantinePanel());
     }

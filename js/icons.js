@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — SVG Icon System
+ * SPARES-CHAIN v6.3 — SVG Icon System
  * Professional inline SVG icons replacing emojis.
  * Loaded BEFORE all other scripts.
  */

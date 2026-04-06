@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — Store (Estado Global e Persistência)
+ * SPARES-CHAIN v6.3 — Store (Estado Global e Persistência)
  * Fonte única de verdade para todo o estado da aplicação.
  */
 
@@ -7,7 +7,6 @@
 const state = {
     spareCounter: parseInt(localStorage.getItem('spareCounter')) || 1,
     disposalDocCounter: parseInt(localStorage.getItem('disposalDocCounter')) || 1,
-    blockchainLog: [],
     currentUser: null,
     sparesData: {},
     currentContextSpare: null,
@@ -109,12 +108,32 @@ function addSpareEvent(code, type, data) {
     });
     state.sparesData[code].currentState = type;
 
+    if (type === 'ESCANEADO') {
+        state.sparesData[code].lastScan = new Date().toISOString();
+        delete state.sparesData[code].shelf;
+    }
+    if (type === 'COLETADO') {
+        state.sparesData[code].transportadora = data.operator;
+        delete state.sparesData[code].shelf;
+    }
+    if (type === 'ENTREGUE_BORDO') {
+        delete state.sparesData[code].shelf;
+    }
+    if (type === 'ARMAZENADO') {
+        state.sparesData[code].shelf = data.shelf;
+    }
+    if (type === 'INSTALADO' || type === 'REMOVIDO' || type === 'DESCARTADO_FINAL' || type === 'RECEBIDO') {
+        delete state.sparesData[code].shelf;
+    }
+
     saveAll();
 }
 
 function generateDisposalDoc() {
-    const year = new Date().getFullYear();
-    const docNumber = `DD-${year}-${String(state.disposalDocCounter).padStart(4, '0')}`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const ts = now.getTime().toString().slice(-6); // 6 dígitos finais do timestamp
+    const docNumber = `DD-${year}-${ts}-${String(state.disposalDocCounter).padStart(4, '0')}`;
     state.disposalDocCounter++;
     localStorage.setItem('disposalDocCounter', state.disposalDocCounter);
     return docNumber;

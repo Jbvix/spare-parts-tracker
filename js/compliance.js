@@ -1,5 +1,5 @@
 /**
- * SPARES-CHAIN v6.2 — Compliance (Modais de Conformidade, Histórico, Descarte)
+ * SPARES-CHAIN v6.3 — Compliance (Modais de Conformidade, Histórico, Descarte)
  */
 
 // ===== CONFORMIDADE =====
@@ -19,11 +19,11 @@ function showComplianceDetails() {
             <h3 style="color: #ff4757; margin-bottom: 20px;">${icon('alertTriangle')} Não-Conformidades Detectadas: ${state.nonComplianceList.length}</h3>
             ${state.nonComplianceList.map((nc, index) => `
                 <div style="background: rgba(255, 71, 87, 0.1); border: 2px solid #ff4757; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-                    <strong>#${index + 1} - ${nc.operation}</strong><br>
-                    Peça: ${nc.spare}<br>
-                    Operador: ${nc.operator}<br>
+                    <strong>#${index + 1} - ${escapeHtml(nc.operation)}</strong><br>
+                    Peça: ${escapeHtml(nc.spare)}<br>
+                    Operador: ${escapeHtml(nc.operator)}<br>
                     Data/Hora: ${new Date(nc.timestamp).toLocaleString('pt-BR')}<br>
-                    Motivo: ${nc.reason}
+                    Motivo: ${escapeHtml(nc.reason)}
                 </div>
             `).join('')}
         `;
@@ -46,8 +46,14 @@ function showHistory(code) {
     if (!spare) return;
 
     const content = document.getElementById('historyContent');
+    const formatHistoryValue = value => {
+        if (value === null || value === undefined) return '-';
+        if (typeof value === 'object') return escapeHtml(JSON.stringify(value));
+        return escapeHtml(String(value));
+    };
+
     content.innerHTML = `
-        <h3 style="color: #00d4ff; margin-bottom: 20px;">${icon(spare.icon)} ${spare.name} (${spare.code})</h3>
+        <h3 style="color: #00d4ff; margin-bottom: 20px;">${icon(spare.icon)} ${escapeHtml(spare.name)} (${escapeHtml(spare.code)})</h3>
         <div style="margin-bottom: 20px;">
             <strong>Total de Escaneamentos:</strong> ${spare.scanCount}<br>
             <strong>Não-conformidades:</strong> ${spare.nonCompliantOps.length}
@@ -55,10 +61,10 @@ function showHistory(code) {
         <div class="history-timeline">
             ${spare.history.map((event) => `
                 <div class="history-item">
-                    <strong>${event.type}</strong><br>
+                    <strong>${escapeHtml(event.type)}</strong><br>
                     <small>${new Date(event.timestamp).toLocaleString('pt-BR')}</small><br>
                     ${Object.entries(event.data).map(([key, value]) =>
-                        `${key}: ${value}`
+                        `${escapeHtml(key)}: ${formatHistoryValue(value)}`
                     ).join('<br>')}
                 </div>
             `).join('')}
@@ -99,15 +105,15 @@ function showDisposalRecords() {
             <h3 style="margin-bottom: 15px; color: #ff4757;">Histórico de Descartes</h3>
             ${state.disposalRecords.map((disposal, index) => `
                 <div style="background: rgba(255, 71, 87, 0.05); border-left: 4px solid #ff4757; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
-                    <strong>#${index + 1} - ${disposal.name} (${disposal.code})</strong><br>
+                    <strong>#${index + 1} - ${escapeHtml(disposal.name)} (${escapeHtml(disposal.code)})</strong><br>
                     <small style="color: #aaa;">${new Date(disposal.disposalDate).toLocaleString('pt-BR')}</small><br><br>
 
-                    <strong>Equipamento:</strong> ${disposal.equipment}<br>
+                    <strong>Equipamento:</strong> ${escapeHtml(disposal.equipment)}<br>
                     <strong>Horas Instalação:</strong> ${disposal.installHours.toFixed(1)}h<br>
                     <strong>Horas Remoção:</strong> ${disposal.removalHours.toFixed(1)}h<br>
                     <strong>Horas Trabalhadas:</strong> <span style="color: #00d4ff;">${disposal.hoursWorked.toFixed(1)}h</span><br>
-                    <strong>Motivo:</strong> ${disposal.reason}<br>
-                    <strong>Operador:</strong> ${disposal.operator}<br>
+                    <strong>Motivo:</strong> ${escapeHtml(disposal.reason)}<br>
+                    <strong>Operador:</strong> ${escapeHtml(disposal.transportOperator || disposal.removedBy || 'N/A')}<br>
                     <strong>Hash:</strong> <code>${disposal.hash}</code>
                 </div>
             `).reverse().join('')}
@@ -222,11 +228,11 @@ function showDisposalDocument(docNumber, items) {
                 </div>
                 <div>
                     <strong>${icon('truck')} Transportadora:</strong><br>
-                    ${items[0].transportCompany}
+                    ${escapeHtml(items[0].transportCompany)}
                 </div>
                 <div>
                     <strong>${icon('user')} Operador:</strong><br>
-                    ${items[0].transportOperator}
+                    ${escapeHtml(items[0].transportOperator)}
                 </div>
                 <div>
                     <strong>${icon('package')} Total Itens:</strong><br>
@@ -245,17 +251,17 @@ function showDisposalDocument(docNumber, items) {
             <div style="background: rgba(0, 0, 0, 0.3); border-left: 4px solid #ff4757; border-radius: 5px; padding: 15px; margin-bottom: 10px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
-                        <strong>#${index + 1} - ${item.name}</strong><br>
-                        <small style="color: #aaa;">${item.code}</small>
+                        <strong>#${index + 1} - ${escapeHtml(item.name)}</strong><br>
+                        <small style="color: #aaa;">${escapeHtml(item.code)}</small>
                     </div>
                     <div style="text-align: right;">
                         <strong style="color: #00d4ff;">Trabalhou: ${item.hoursWorked.toFixed(1)}h</strong>
                     </div>
                 </div>
                 <div style="margin-top: 10px; font-size: 13px;">
-                    <strong>Equipamento:</strong> ${item.equipment} |
-                    <strong>Motivo:</strong> ${item.reason}<br>
-                    <strong>Removido por:</strong> ${item.removedBy}<br>
+                    <strong>Equipamento:</strong> ${escapeHtml(item.equipment)} |
+                    <strong>Motivo:</strong> ${escapeHtml(item.reason)}<br>
+                    <strong>Removido por:</strong> ${escapeHtml(item.removedBy)}<br>
                     <strong>Hash:</strong> <code>${item.hash}</code>
                 </div>
             </div>

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-6.2-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-6.3-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/tech-HTML%20%7C%20CSS%20%7C%20JS-orange" alt="Tech">
   <img src="https://img.shields.io/badge/zero-dependencies-brightgreen" alt="Zero Dependencies">
@@ -78,7 +78,7 @@ FORNECEDOR → ALMOXARIFADO → TRANSPORTADORA → BORDO → INSTALAÇÃO → RE
 3. **Faça login** com nome, papel e local/empresa
 4. **Interaja** arrastando peças entre os painéis conforme seu papel
 
-> Não requer servidor, build, nem dependências. É um único arquivo HTML autossuficiente.
+> Não requer servidor, build, nem dependências. Basta abrir o `index.html` no navegador.
 
 ---
 
@@ -98,8 +98,18 @@ FORNECEDOR → ALMOXARIFADO → TRANSPORTADORA → BORDO → INSTALAÇÃO → RE
 
 ```
 SPARES-CHAIN/
-├── index.html    # Aplicação completa (HTML + CSS + JS)
-├── LICENSE        # MIT License
+├── index.html         # Estrutura HTML principal
+├── css/
+│   └── styles.css     # Estilos (grid, animações, temas)
+├── js/
+│   ├── app.js         # Bootstrap / Inicialização
+│   ├── store.js       # Estado global e persistência (localStorage)
+│   ├── ui.js          # Criação de painéis e elementos
+│   ├── handlers.js    # Drag & Drop, ações, menu de contexto
+│   ├── compliance.js  # Modais de conformidade, histórico, descarte
+│   ├── icons.js       # Sistema de ícones SVG (Lucide/Feather)
+│   └── utils.js       # Funções utilitárias (hash, escape, etc.)
+├── LICENSE            # MIT License
 └── README.md
 ```
 
@@ -120,6 +130,22 @@ SPARES-CHAIN/
 - **Three-Party Handoff** — transferência tripla com escaneamento
 - **Anomaly Detection** — detecção de não-conformidades
 - **Blockchain Logging** — registro imutável de eventos com hash
+
+---
+
+## 🗓️ Changelog
+
+### v6.3 — 06 de Abril de 2026
+- **Arquitetura modular** — código separado em 7 módulos JS + CSS externo
+- **Ícones SVG profissionais** — todos os emojis substituídos por ícones Lucide/Feather
+- **Gerenciamento de estado global** — store centralizado com persistência localStorage
+- **Correções de CSS** — especificidade do `.hidden` corrigida com `!important`
+- **Ordem de carregamento** — scripts reorganizados para dependências corretas
+
+### v6.2 — 09 de Outubro de 2025
+- Peças removidas vão direto para quarentena
+- Botão RESET para limpar sistema
+- Tutorial interativo de boas-vindas
 
 ---
 
