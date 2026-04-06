@@ -529,6 +529,7 @@ window.updateDashboard = function() {
     const compliance = totalOps > 0 ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0) : 100;
     document.getElementById('kpiCompliance').textContent = compliance + '%';
     if (typeof updateComplianceGrid === 'function') updateComplianceGrid();
+    if (typeof updateBlockchainFilter === 'function') updateBlockchainFilter();
     console.log('[DASH] Dashboard atualizado:', {
         totalParts, totalScans, inTransit, installed, inQuarantine,
         disposed: state.disposalRecords ? state.disposalRecords.length : 0, totalOps,
@@ -576,3 +577,138 @@ window.placeSpareElement = function(spareDiv) {
     }
     if (target) target.appendChild(spareDiv);
 };
+
+// ===== VISUALIZADOR BLOCKCHAIN =====
+
+const BC_TYPE_COLORS = {
+    'RECEBIDO':       '#00d4ff',
+    'ESCANEADO':      '#00ff88',
+    'COLETADO':       '#ffa502',
+    'EM_TRANSITO':    '#ffa502',
+    'ENTREGUE_BORDO': '#2ecc71',
+    'ARMAZENADO':     '#3498db',
+    'INSTALADO':      '#00ff88',
+    'REMOVIDO':       '#ff6348',
+    'QUARENTENA':     '#e74c3c',
+    'DESCARTADO_FINAL': '#ff4757',
+    'AGUARDANDO_COLETA': '#f39c12'
+};
+
+function computeBlockHash(prevHash, type, timestamp, operator) {
+    const str = `${prevHash}|${type}|${timestamp}|${operator}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return Math.abs(hash).toString(16).padStart(8, '0');
+}
+
+function updateBlockchainFilter() {
+    const filter = document.getElementById('blockchainFilter');
+    if (!filter) return;
+    const current = filter.value;
+    filter.innerHTML = '<option value="ALL">Todas as Peças</option>';
+    if (!state.sparesData) return;
+    for (const code in state.sparesData) {
+        const spare = state.sparesData[code];
+        if (spare && spare.history && spare.history.length > 0) {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = `${spare.name} (${code})`;
+            if (code === current) opt.selected = true;
+            filter.appendChild(opt);
+        }
+    }
+}
+
+function renderBlockchainView() {
+    updateBlockchainFilter();
+    const filter = document.getElementById('blockchainFilter');
+    const container = document.getElementById('blockchainView');
+    if (!container) return;
+
+    const selectedCode = filter ? filter.value : 'ALL';
+    let blocks = [];
+
+    if (!state.sparesData) {
+        container.innerHTML = '<div class="bc-empty"><p>Nenhum registro disponível.</p></div>';
+        return;
+    }
+
+    if (selectedCode === 'ALL') {
+        for (const code in state.sparesData) {
+            const spare = state.sparesData[code];
+            if (spare && spare.history) {
+                spare.history.forEach(event => blocks.push({ code, name: spare.name, event }));
+            }
+        }
+        blocks.sort((a, b) => new Date(a.event.timestamp) - new Date(b.event.timestamp));
+    } else {
+        const spare = state.sparesData[selectedCode];
+        if (spare && spare.history) {
+            blocks = spare.history.map(event => ({ code: selectedCode, name: spare.name, event }));
+        }
+    }
+
+    if (blocks.length === 0) {
+        container.innerHTML = `
+            <div class="bc-empty">
+                ${icon('qrCode', 'xl')}
+                <p style="margin-top: 10px;">Nenhum registro. Realize operações para gerar blocos.</p>
+            </div>`;
+        return;
+    }
+
+    let prevHash = '00000000';
+    const html = blocks.map((block, i) => {
+        const { code, name, event } = block;
+        const operator = (event.data && event.data.operator) ? event.data.operator : 'Sistema';
+        const location = (event.data && event.data.location) ? event.data.location : null;
+        const equip    = (event.data && event.data.equip)    ? event.data.equip    : null;
+        const shelf    = (event.data && event.data.shelf)    ? event.data.shelf    : null;
+        const currentHash = computeBlockHash(prevHash, event.type, event.timestamp, operator);
+        const color = BC_TYPE_COLORS[event.type] || '#aaa';
+        const ts = new Date(event.timestamp).toLocaleString('pt-BR');
+        const ph = prevHash;
+        prevHash = currentHash;
+
+        const extraRows = [
+            location ? `<div class="bc-row"><span class="bc-label">Local:</span> ${escapeHtml(location)}</div>` : '',
+            equip    ? `<div class="bc-row"><span class="bc-label">Equipamento:</span> ${escapeHtml(equip)}</div>` : '',
+            shelf    ? `<div class="bc-row"><span class="bc-label">Prateleira:</span> ${escapeHtml(shelf)}</div>` : ''
+        ].join('');
+
+        const connector = i < blocks.length - 1
+            ? '<div class="bc-connector"></div>'
+            : '';
+
+        return `
+            <div class="bc-block">
+                <div class="bc-block-num">#${String(i + 1).padStart(3, '0')}</div>
+                <div class="bc-block-body" style="border-color:${color};">
+                    <div class="bc-block-header" style="background:${color}22; border-bottom:1px solid ${color}44;">
+                        <span class="bc-type" style="color:${color};">${escapeHtml(event.type)}</span>
+                        <span class="bc-ts">${ts}</span>
+                    </div>
+                    <div class="bc-block-content">
+                        <div class="bc-row"><span class="bc-label">Peça:</span> ${escapeHtml(name)} <span style="color:#555;">(${escapeHtml(code)})</span></div>
+                        <div class="bc-row"><span class="bc-label">Operador:</span> ${escapeHtml(operator)}</div>
+                        ${extraRows}
+                        <div class="bc-hash-row">
+                            <span class="bc-label">Hash anterior:</span>
+                            <code class="bc-hash bc-hash-prev">${ph}</code>
+                        </div>
+                        <div class="bc-hash-row">
+                            <span class="bc-label">Hash atual:</span>
+                            <code class="bc-hash bc-hash-curr" style="color:${color}; border-color:${color};">${currentHash}</code>
+                        </div>
+                    </div>
+                </div>
+                ${connector}
+            </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+}

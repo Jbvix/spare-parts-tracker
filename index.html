@@ -247,6 +247,33 @@
                 <!-- Painéis serão inseridos dinamicamente conforme papel do usuário -->
             </div>
 
+            <!-- Visualizador de Registros Blockchain -->
+            <div class="panel" id="blockchainPanel">
+                <div class="panel-header">
+                    <span class="panel-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><path d="M14 14h2v2h-2z"/><path d="M20 14h2v2h-2z"/><path d="M14 20h2v2h-2z"/><path d="M20 20h2v2h-2z"/><path d="M17 17h2v2h-2z"/></svg></span>
+                    <span class="panel-title">REGISTROS BLOCKCHAIN</span>
+                </div>
+                <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
+                    Cadeia de blocos imutável — cada evento gera um hash encadeado ao anterior.
+                </p>
+                <div class="bc-toolbar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+                    <select id="blockchainFilter" onchange="renderBlockchainView()">
+                        <option value="ALL">Todas as Peças</option>
+                    </select>
+                    <button class="action-btn" onclick="renderBlockchainView()" style="margin: 0; padding: 8px 16px;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Atualizar
+                    </button>
+                </div>
+                <div id="blockchainView" class="bc-chain">
+                    <div class="bc-empty">
+                        <svg class="icon icon-2xl" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><path d="M14 14h2v2h-2z"/></svg>
+                        <p style="margin-top: 10px;">Nenhum registro. Realize operações para gerar blocos.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Log de Atividades -->
             <div class="panel">
                 <div class="panel-header">
