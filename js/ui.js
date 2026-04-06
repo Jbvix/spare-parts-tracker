@@ -133,7 +133,7 @@ function createEquipmentPanel() {
             <div id="equipMCPBB"></div>
         </div>
         <div class="equipment-slot" data-equip="MCP_BE" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div class="equipment-label">${icon('ship')} MCP BOMBORDO (BE)</div>
+            <div class="equipment-label">${icon('ship')} MCP BORESTE (BE)</div>
             <div id="equipMCPBE"></div>
         </div>
         <div class="equipment-slot" data-equip="GERADOR" ondrop="drop(event)" ondragover="allowDrop(event)">
@@ -369,36 +369,6 @@ function recreateSpareElement(spare) {
         ${(state.currentUser.role === 'ALMOX' && (spare.currentState === 'RECEBIDO' || spare.currentState === 'ESCANEADO')) ? `<button class='action-btn' style='margin-top:6px;' onclick='openRegisterTransporterModal(\"${spare.code}\")'>${icon('truck')} Registrar Saída/Transportador</button>` : ''}
         ${(state.currentUser.role === 'TRANSPORTADORA' && spare.currentState === 'EM_TRANSITO') ? `<button class='action-btn' style='margin-top:6px;' onclick='openArrivalModal(\"${spare.code}\")'>${icon('clock')} Registrar Chegada no Destino</button><button class='action-btn' style='margin-top:6px;' onclick='openDeliveryModal(\"${spare.code}\")'>${icon('upload')} Registrar Entrega a Bordo</button>` : ''}
     `;
-        <!-- Modal Chegada no Destino -->
-        <div id="arrivalModal" class="modal" style="display:none; z-index:9999;">
-            <div class="modal-content" style="max-width:400px;">
-                <div class="modal-header">
-                    <h2 class="modal-title">Registrar Chegada no Destino</h2>
-                    <button class="modal-close" onclick="closeArrivalModal()">✕</button>
-                </div>
-                <form id="arrivalForm" onsubmit="submitArrivalForm(event)">
-                    <label>Data/Hora de Chegada:<input type="datetime-local" id="arrivalDatetime" required></label><br>
-                    <input type="hidden" id="arrivalPartCode">
-                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Chegada</button>
-                </form>
-            </div>
-        </div>
-        <!-- Modal Entrega a Bordo -->
-        <div id="registerTransporterModal" class="modal" style="display:none; z-index:9999;"></div>
-        <div id="arrivalModal" class="modal" style="display:none; z-index:9999;"></div>
-        <div id="deliveryModal" class="modal" style="display:none; z-index:9999;"></div>
-    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
-        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
-        const shelfSlot = target ? target.closest('.shelf-slot') : null;
-        if (shelfSlot) shelfSlot.classList.add('occupied');
-    } else if (stateName === 'INSTALADO') {
-        target = ensureSpareStagingArea();
-    } else if (stateName === 'QUARENTENA') {
-        target = document.getElementById('quarantineList');
-    } else if (stateName === 'DESCARTADO_FINAL') {
-        return;
-    }
-    if (target) target.appendChild(spareDiv);
 }
 
 function ensureSpareStagingArea() {
@@ -481,48 +451,6 @@ function addSpare() {
 }
 
 // ===== DASHBOARD =====
-function updateDashboard() {
-    ensureSparesData();
-    let totalParts = 0;
-    let inTransit = 0;
-    let installed = 0;
-    let inQuarantine = 0;
-    let totalScans = 0;
-    let totalOps = 0;
-    const allSpares = document.querySelectorAll('.spare-item');
-    totalParts = allSpares.length;
-    allSpares.forEach(spare => {
-        const st = spare.dataset.state;
-        const scanCount = parseInt(spare.dataset.scanCount || 0);
-        if (st === 'EM_TRANSITO') inTransit++;
-        if (st === 'INSTALADO') installed++;
-        if (st === 'QUARENTENA') inQuarantine++;
-        totalScans += scanCount;
-    });
-    for (let code in state.sparesData) {
-        if (state.sparesData[code] && state.sparesData[code].history) {
-            totalOps += state.sparesData[code].history.length;
-        }
-    }
-    if (totalOps === 0) totalOps = totalParts;
-    document.getElementById('kpiTotalParts').textContent = totalParts;
-    document.getElementById('kpiTotalScans').textContent = totalScans;
-    document.getElementById('kpiInTransit').textContent = inTransit;
-    document.getElementById('kpiInstalled').textContent = installed;
-    document.getElementById('kpiQuarantine').textContent = inQuarantine;
-    document.getElementById('kpiDisposed').textContent = state.disposalRecords ? state.disposalRecords.length : 0;
-    document.getElementById('kpiNonCompliant').textContent = state.nonComplianceList ? state.nonComplianceList.length : 0;
-    const compliance = totalOps > 0 ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0) : 100;
-    document.getElementById('kpiCompliance').textContent = compliance + '%';
-    if (typeof updateComplianceGrid === 'function') updateComplianceGrid();
-    console.log('[DASH] Dashboard atualizado:', {
-        totalParts, totalScans, inTransit, installed, inQuarantine,
-        disposed: state.disposalRecords ? state.disposalRecords.length : 0, totalOps,
-        compliance: compliance + '%',
-        nonCompliance: state.nonComplianceList ? state.nonComplianceList.length : 0
-    });
-}
-
 function updateComplianceGrid() {
     const grid = document.getElementById('complianceGrid');
 
