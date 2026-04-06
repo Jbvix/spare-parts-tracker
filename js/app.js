@@ -208,7 +208,7 @@ function switchRole(newRole) {
     addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
     // Repopula painel de trânsito se Chefe de Máquinas
     if (newRole === 'CHEFE_MAQ') {
-        setTimeout(repopulateInTransitForBordo, 100);
+        repopulateInTransitForBordoRobusto();
     }
 }
 
@@ -222,19 +222,43 @@ function loadAll() {
     login();
 }
 
-// Força repopulação das peças em trânsito ao trocar para Chefe de Máquinas
-function repopulateInTransitForBordo() {
-    if (!state.sparesData) return;
+// Repopulação robusta: só executa quando o painel existir
+function repopulateInTransitForBordoRobusto(tentativas = 0) {
     const inTransitPanel = document.getElementById('inTransitForBordo');
-    if (!inTransitPanel) {
-        console.warn('Painel Peças em Trânsito não encontrado!');
-        return;
-    }
-    // Limpa painel
-    inTransitPanel.innerHTML = '';
-    Object.values(state.sparesData).forEach(spare => {
-        if (spare.currentState === 'EM_TRANSITO') {
-            recreateSpareElement(spare);
+    if (inTransitPanel) {
+        inTransitPanel.innerHTML = '';
+        if (state.sparesData) {
+            Object.values(state.sparesData).forEach(spare => {
+                if (spare.currentState === 'EM_TRANSITO') {
+                    recreateSpareElement(spare);
+                }
+            });
         }
-    });
+    } else if (tentativas < 10) {
+        setTimeout(() => repopulateInTransitForBordoRobusto(tentativas + 1), 100);
+    } else {
+        console.warn('Painel Peças em Trânsito não encontrado após várias tentativas!');
+    }
+}
+
+// Substitui chamada anterior por esta robusta
+if (typeof switchRole === 'function') {
+    const originalSwitchRole = switchRole;
+    window.switchRole = function(newRole) {
+        loadAll();
+        const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser'));
+        if (!user) return;
+        user.role = newRole;
+        state.currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        document.getElementById('displayUserRole').textContent = getRoleName(newRole);
+        closeRoleSwitchModal();
+        initializeInterface();
+        showRoleInstructions();
+        updateDashboard();
+        addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
+        if (newRole === 'CHEFE_MAQ') {
+            repopulateInTransitForBordoRobusto();
+        }
+    };
 }
