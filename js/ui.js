@@ -369,6 +369,11 @@ function recreateSpareElement(spare) {
         ${(state.currentUser.role === 'ALMOX' && (spare.currentState === 'RECEBIDO' || spare.currentState === 'ESCANEADO')) ? `<button class='action-btn' style='margin-top:6px;' onclick='openRegisterTransporterModal(\"${spare.code}\")'>${icon('truck')} Registrar Saída/Transportador</button>` : ''}
         ${(state.currentUser.role === 'TRANSPORTADORA' && spare.currentState === 'EM_TRANSITO') ? `<button class='action-btn' style='margin-top:6px;' onclick='openArrivalModal(\"${spare.code}\")'>${icon('clock')} Registrar Chegada no Destino</button><button class='action-btn' style='margin-top:6px;' onclick='openDeliveryModal(\"${spare.code}\")'>${icon('upload')} Registrar Entrega a Bordo</button>` : ''}
     `;
+
+    spareDiv.addEventListener('dragstart', drag);
+    spareDiv.addEventListener('contextmenu', showContextMenu);
+
+    if (typeof placeSpareElement === 'function') placeSpareElement(spareDiv);
 }
 
 function ensureSpareStagingArea() {
@@ -542,7 +547,7 @@ window.updateDashboard = function() {
 window.placeSpareElement = function(spareDiv) {
     const stateName = spareDiv.dataset.state || 'RECEBIDO';
     let target = null;
-    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
+    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO' || stateName === 'AGUARDANDO_COLETA') {
         target = document.getElementById('sparesList');
     } else if (stateName === 'EM_TRANSITO') {
         target = document.getElementById('transportInTransit');
