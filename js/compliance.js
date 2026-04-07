@@ -272,13 +272,13 @@ function showDisposalDocument(docNumber, items) {
     const totalHours = items.reduce((sum, item) => sum + item.hoursWorked, 0);
 
     content.innerHTML = `
-        <div style="background: rgba(0, 0, 0, 0.8); border: 3px solid #00d4ff; border-radius: 10px; padding: 25px; margin-bottom: 20px;">
+        <div class="responsive-document-card" style="background: rgba(0, 0, 0, 0.8); border: 3px solid #00d4ff; border-radius: 10px; padding: 25px; margin-bottom: 20px;">
             <h2 style="color: #00d4ff; text-align: center; margin-bottom: 20px;">${icon('fileText')} DOCUMENTO DE DESCARTE</h2>
             <div style="text-align: center; font-size: 32px; font-weight: bold; color: #ffa502; margin: 20px 0; padding: 15px; background: rgba(255, 165, 2, 0.1); border-radius: 8px;">
                 ${docNumber}
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+            <div class="responsive-meta-grid">
                 <div>
                     <strong>${icon('calendar')} Data/Hora:</strong><br>
                     ${new Date(items[0].collectionDate).toLocaleString('pt-BR')}
@@ -305,13 +305,13 @@ function showDisposalDocument(docNumber, items) {
         </div>
 
         ${items.map((item, index) => `
-            <div style="background: rgba(0, 0, 0, 0.3); border-left: 4px solid #ff4757; border-radius: 5px; padding: 15px; margin-bottom: 10px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="responsive-document-card" style="background: rgba(0, 0, 0, 0.3); border-left: 4px solid #ff4757; border-radius: 5px; padding: 15px; margin-bottom: 10px;">
+                <div class="responsive-item-row">
                     <div>
                         <strong>#${index + 1} - ${escapeHtml(item.name)}</strong><br>
                         <small style="color: #aaa;">${escapeHtml(item.code)}</small>
                     </div>
-                    <div style="text-align: right;">
+                    <div class="responsive-item-value-right">
                         <strong style="color: #00d4ff;">Trabalhou: ${item.hoursWorked.toFixed(1)}h</strong>
                     </div>
                 </div>
