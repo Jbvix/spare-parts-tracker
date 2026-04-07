@@ -2,7 +2,6 @@
  * SPARES-CHAIN v6.3 — UI (Criação de Painéis e Elementos)
  */
 
-// ===== CRIAÇÃO DE PAINÉIS =====
 function createScannerPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
@@ -17,16 +16,16 @@ function createScannerPanel() {
         <div id="scanner" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
             <div class="scanner-frame">
                 <div class="scanner-line"></div>
-                <div class="qr-placeholder">${icon('smartphone','xl')}</div>
+                <div class="qr-placeholder">${icon('smartphone', 'xl')}</div>
             </div>
             <p>Arraste uma peça aqui</p>
         </div>
     `;
     return panel;
 }
-window.createScannerPanel = createScannerPanel;
 
 function createAlmoxPanel() {
+    const isAlmox = state.currentUser?.role === 'ALMOX';
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -35,27 +34,42 @@ function createAlmoxPanel() {
             <span class="panel-title">ALMOXARIFADO</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            ${state.currentUser.role === 'ALMOX' ? 'Recebe de fornecedores e entrega para transportadora.' : 'Peças disponíveis no almoxarifado (apenas visualização).'}
+            ${isAlmox ? 'Recebe de fornecedores e registra saída para a transportadora.' : 'Peças disponíveis no almoxarifado (apenas visualização).'}
         </p>
-        <div id="almoxarifado" class="drop-zone" ${state.currentUser.role === 'ALMOX' ? 'ondrop="drop(event)" ondragover="allowDrop(event)"' : ''}>
+        <div id="almoxarifado" class="drop-zone" ${isAlmox ? 'ondrop="drop(event)" ondragover="allowDrop(event)"' : ''}>
             <p>${icon('factory')} ESTOQUE ALMOXARIFADO</p>
             <div id="sparesList"></div>
-            ${state.currentUser.role === 'ALMOX' ? '<button class="action-btn" onclick="addSpare()">' + icon('plus') + ' Receber Peça</button>' : ''}
+            ${isAlmox ? `<button class="action-btn" onclick="addSpare()">${icon('plus')} Receber Peça</button>` : ''}
         </div>
-        <div id="registerTransporterModal" class="modal" style="display:none; z-index:9999;">
-            <div class="modal-content" style="max-width:400px;">
+        <div id="registerTransporterModal" class="modal" style="display:none;">
+            <div class="modal-content" style="max-width: 420px;">
                 <div class="modal-header">
-                    <h2 class="modal-title">Registrar Transportador</h2>
+                    <h2 class="modal-title">${icon('truck')} Registrar Transportador</h2>
                     <button class="modal-close" onclick="closeRegisterTransporterModal()">✕</button>
                 </div>
                 <form id="transporterForm" onsubmit="submitTransporterForm(event)">
-                    <label>Nome do Transportador:<input type="text" id="transpName" required></label><br>
-                    <label>Documento:<input type="text" id="transpDoc" required></label><br>
-                    <label>Empresa:<input type="text" id="transpCompany" required></label><br>
-                    <label>Veículo:<input type="text" id="transpVehicle" required></label><br>
-                    <label>Contato:<input type="text" id="transpContact" required></label><br>
+                    <div class="form-group">
+                        <label for="transpName">Nome do Transportador</label>
+                        <input type="text" id="transpName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transpDoc">Documento</label>
+                        <input type="text" id="transpDoc" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transpCompany">Empresa</label>
+                        <input type="text" id="transpCompany" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transpVehicle">Veículo</label>
+                        <input type="text" id="transpVehicle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transpContact">Contato</label>
+                        <input type="text" id="transpContact" required>
+                    </div>
                     <input type="hidden" id="transpPartCode">
-                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Saída</button>
+                    <button type="submit" class="action-btn">${icon('checkCircle')} Registrar Saída</button>
                 </form>
             </div>
         </div>
@@ -72,11 +86,11 @@ function createTransportadoraCollectPanel() {
             <span class="panel-title transportadora">COLETA (Almoxarifado)</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            Transportadora coleta peças do almoxarifado. <strong>ESCANEAR ao coletar!</strong>
+            Transportadora coleta peças do almoxarifado. Escaneamento recomendado antes da coleta.
         </p>
         <div id="transportCollect" class="drop-zone transportadora" ondrop="drop(event)" ondragover="allowDrop(event)">
             <p>${icon('package')} ZONA DE COLETA</p>
-            <p style="font-size: 12px; color: #ffa502;">Arraste peça escaneada para coletar</p>
+            <p style="font-size: 12px; color: #ffa502;">Peças aguardando coleta autorizada</p>
         </div>
     `;
     return panel;
@@ -91,11 +105,43 @@ function createTransportadoraDeliverPanel() {
             <span class="panel-title transportadora">ENTREGA (Bordo)</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            Transportadora entrega peças a bordo. <strong>ESCANEAR ao entregar!</strong>
+            Transportadora entrega peças a bordo. Escanear antes da entrega mantém a cadeia conforme.
         </p>
         <div id="transportDeliver" class="drop-zone transportadora" ondrop="drop(event)" ondragover="allowDrop(event)">
             <p>${icon('upload')} ZONA DE ENTREGA</p>
-            <div id="transportInTransit" style="margin-top: 15px;"></div>
+            <div id="transportInTransit" style="margin-top: 15px; width: 100%;"></div>
+        </div>
+        <div id="arrivalModal" class="modal" style="display:none;">
+            <div class="modal-content" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">${icon('clock')} Registrar Chegada</h2>
+                    <button class="modal-close" onclick="closeArrivalModal()">✕</button>
+                </div>
+                <form id="arrivalForm" onsubmit="submitArrivalForm(event)">
+                    <div class="form-group">
+                        <label for="arrivalDatetime">Data/Hora de Chegada</label>
+                        <input type="datetime-local" id="arrivalDatetime" required>
+                    </div>
+                    <input type="hidden" id="arrivalPartCode">
+                    <button type="submit" class="action-btn">${icon('checkCircle')} Registrar Chegada</button>
+                </form>
+            </div>
+        </div>
+        <div id="deliveryModal" class="modal" style="display:none;">
+            <div class="modal-content" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">${icon('upload')} Registrar Entrega</h2>
+                    <button class="modal-close" onclick="closeDeliveryModal()">✕</button>
+                </div>
+                <form id="deliveryForm" onsubmit="submitDeliveryForm(event)">
+                    <div class="form-group">
+                        <label for="deliveryDatetime">Data/Hora de Entrega</label>
+                        <input type="datetime-local" id="deliveryDatetime" required>
+                    </div>
+                    <input type="hidden" id="deliveryPartCode">
+                    <button type="submit" class="action-btn">${icon('checkCircle')} Registrar Entrega</button>
+                </form>
+            </div>
         </div>
     `;
     return panel;
@@ -114,7 +160,7 @@ function createBordoPanel() {
         </p>
         <div id="bordo" class="drop-zone">
             <p>${icon('package')} ESTOQUE DE BORDO</p>
-            <div id="bordoList" style="margin-top: 15px;"></div>
+            <div id="bordoList" style="margin-top: 15px; width: 100%;"></div>
         </div>
     `;
     return panel;
@@ -133,7 +179,7 @@ function createEquipmentPanel() {
             <div id="equipMCPBB"></div>
         </div>
         <div class="equipment-slot" data-equip="MCP_BE" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div class="equipment-label">${icon('ship')} MCP BOMBORDO (BE)</div>
+            <div class="equipment-label">${icon('ship')} MCP BORESTE (BE)</div>
             <div id="equipMCPBE"></div>
         </div>
         <div class="equipment-slot" data-equip="GERADOR" ondrop="drop(event)" ondragover="allowDrop(event)">
@@ -153,16 +199,16 @@ function createShelfPanel() {
             <span class="panel-title">PRATELEIRAS BORDO</span>
         </div>
         <div class="shelf-grid">
-            ${['A1', 'A2', 'A3', 'B1', 'B2', 'B3'].map(shelf => `
+            ${['A1', 'A2', 'A3', 'B1', 'B2', 'B3'].map((shelf) => `
                 <div class="shelf-slot" data-shelf="${shelf}" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div>${shelf}</div>
                     <div id="shelf${shelf}"></div>
                 </div>
             `).join('')}
         </div>
-        <div class="panel-header" style="margin-top:20px;">
+        <div class="panel-header" style="margin-top: 20px;">
             <span class="panel-icon">${icon('alertTriangle')}</span>
-            <span class="panel-title" style="color:#ff4757;">NÃO CONFORME</span>
+            <span class="panel-title" style="color: #ff4757;">NÃO CONFORME</span>
         </div>
         <div class="shelf-slot" data-shelf="NAO_CONFORME" style="border:2px solid #ff4757; background:rgba(255,71,87,0.08); min-height:60px;" ondrop="drop(event)" ondragover="allowDrop(event)">
             <div>NAO CONFORME</div>
@@ -173,6 +219,13 @@ function createShelfPanel() {
 }
 
 function createQuarantinePanel() {
+    const role = state.currentUser?.role;
+    const description = role === 'CHEFE_MAQ'
+        ? 'Peças removidas ficam em quarentena aguardando logística reversa.'
+        : role === 'TRANSPORTADORA'
+            ? 'Colete resíduos para descarte. Gera documento de descarte automático.'
+            : 'Peças removidas aguardando coleta pela transportadora.';
+
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
@@ -181,23 +234,18 @@ function createQuarantinePanel() {
             <span class="panel-title" style="color: #ffa502;">QUARENTENA/RESÍDUOS</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            ${state.currentUser.role === 'CHEFE_MAQ' ? 
-                'Peças removidas ficam em quarentena aguardando logística reversa.' : 
-                state.currentUser.role === 'TRANSPORTADORA' ?
-                'Colete resíduos para descarte. Gera documento de descarte automático.' :
-                'Peças removidas aguardando coleta pela transportadora.'}
+            ${description}
         </p>
         <div id="quarantine" class="drop-zone" style="border-color: #ffa502; background: rgba(255, 165, 2, 0.1);" ondrop="drop(event)" ondragover="allowDrop(event)">
             <p>${icon('alertTriangle')} ZONA DE QUARENTENA</p>
-            <p style="font-size: 12px; color: #ffa502;">Apenas peças REMOVIDAS</p>
-            <div id="quarantineList" style="margin-top: 15px;"></div>
+            <p style="font-size: 12px; color: #ffa502;">Apenas peças removidas</p>
+            <div id="quarantineList" style="margin-top: 15px; width: 100%;"></div>
         </div>
-        ${state.currentUser.role === 'TRANSPORTADORA' ? '<button class="action-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);" onclick="showDisposalTransport()">' + icon('truck') + ' Logística Reversa</button>' : ''}
+        ${role === 'TRANSPORTADORA' ? `<button class="action-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);" onclick="showDisposalTransport()">${icon('truck')} Logística Reversa</button>` : ''}
     `;
     return panel;
 }
 
-// ===== PAINEL DE PEÇAS EM TRÂNSITO (VISÍVEL PARA CHEFE DE MÁQUINAS) =====
 function createInTransitPanel() {
     const panel = document.createElement('div');
     panel.className = 'panel';
@@ -214,130 +262,134 @@ function createInTransitPanel() {
     return panel;
 }
 
-// Garante que o painel de trânsito do Chefe de Máquinas existe sempre que necessário
 function ensureInTransitForBordoPanel() {
     let panel = document.getElementById('inTransitForBordo');
-    if (!panel) {
-        // Cria dinamicamente se não existir
-        const panelsGrid = document.getElementById('panelsGrid');
-        if (panelsGrid) {
-            const transitPanel = document.createElement('div');
-            transitPanel.className = 'panel';
-            transitPanel.innerHTML = `
-                <div class="panel-header" style="border-bottom-color: #ffa502;">
-                    <span class="panel-icon">${icon('truck')}</span>
-                    <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>
-                </div>
-                <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-                    Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.
-                </p>
-                <div id="inTransitForBordo" style="min-height: 40px;"></div>
-            `;
-            panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling); // após scanner
-            panel = transitPanel.querySelector('#inTransitForBordo');
-        }
+    if (panel) return panel;
+
+    const panelsGrid = document.getElementById('panelsGrid');
+    if (!panelsGrid) return null;
+
+    const transitPanel = createInTransitPanel();
+    const scannerPanel = panelsGrid.firstElementChild;
+
+    if (scannerPanel?.nextSibling) {
+        panelsGrid.insertBefore(transitPanel, scannerPanel.nextSibling);
+    } else {
+        panelsGrid.appendChild(transitPanel);
     }
-    return panel;
+
+    return transitPanel.querySelector('#inTransitForBordo');
 }
 
-// ===== INSTRUÇÕES POR PAPEL =====
 function showRoleInstructions() {
     if (!state.currentUser) return;
 
     const instructionsDiv = document.getElementById('roleInstructions');
+    if (!instructionsDiv) return;
+
     let instructions = '';
 
     switch (state.currentUser.role) {
         case 'ALMOX':
             instructions = `
-                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo ALMOXARIFE:</h3>
+                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo ALMOXARIFE</h3>
                 <ol style="line-height: 2;">
-                    <li><strong>Receber peça:</strong> Clique "${icon('plus')} Receber Peça" → QR gerado automaticamente</li>
-                    <li><strong>Escanear:</strong> Arraste peça → Scanner QR (validar autenticidade)</li>
-                    <li><strong>Entregar para transportadora:</strong> Transportadora coleta do almoxarifado</li>
+                    <li><strong>Receber peça:</strong> clique em "${icon('plus')} Receber Peça".</li>
+                    <li><strong>Escanear:</strong> valide a peça no scanner QR.</li>
+                    <li><strong>Registrar saída:</strong> associe a coleta à transportadora.</li>
                 </ol>
-                <p style="margin-top: 15px; color: #00ff88;"><strong>${icon('checkCircle')} RESPONSABILIDADE:</strong> Garantir que peça genuína sai do almoxarifado com QR escaneado.</p>
+                <p style="margin-top: 15px; color: #00ff88;"><strong>${icon('checkCircle')} Responsabilidade:</strong> liberar apenas peças rastreáveis e identificadas.</p>
             `;
             break;
         case 'TRANSPORTADORA':
             instructions = `
-                <h3 style="color: #ffa502; margin-bottom: 10px;">${icon('fileText')} Fluxo TRANSPORTADORA:</h3>
+                <h3 style="color: #ffa502; margin-bottom: 10px;">${icon('fileText')} Fluxo TRANSPORTADORA</h3>
                 <ol style="line-height: 2;">
-                    <li><strong>Coletar no almoxarifado:</strong> Escanear peça → Arrastar para "ZONA DE COLETA"</li>
-                    <li><strong>Transporte:</strong> Peça fica "EM TRÂNSITO" (rastreável)</li>
-                    <li><strong>Entregar no bordo:</strong> Escanear novamente → Registrar entrega</li>
+                    <li><strong>Coletar:</strong> retire peças com saída registrada pelo almoxarifado.</li>
+                    <li><strong>Transportar:</strong> acompanhe a peça em trânsito.</li>
+                    <li><strong>Entregar:</strong> registre chegada e entrega a bordo.</li>
                 </ol>
-                <p style="margin-top: 15px; color: #ffa502;"><strong>${icon('alertTriangle')} CRÍTICO:</strong> SEMPRE escanear em COLETA e ENTREGA. Falha = não-conformidade registrada!</p>
+                <p style="margin-top: 15px; color: #ffa502;"><strong>${icon('alertTriangle')} Crítico:</strong> ausência de escaneamento gera não-conformidade.</p>
             `;
             break;
         case 'CHEFE_MAQ':
             instructions = `
-                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo CHEFE DE MÁQUINAS:</h3>
+                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo CHEFE DE MÁQUINAS</h3>
                 <ol style="line-height: 2;">
-                    <li><strong>Receber da transportadora:</strong> Escanear peça ao receber</li>
-                    <li><strong>Armazenar:</strong> Arrastar para prateleira (A1-B3)</li>
-                    <li><strong>Retirar:</strong> Escanear ao retirar da prateleira</li>
-                    <li><strong>Instalar:</strong> Escanear → Arrastar para motor + informar horas</li>
+                    <li><strong>Receber:</strong> confira as peças entregues a bordo.</li>
+                    <li><strong>Armazenar:</strong> organize nas prateleiras do bordo.</li>
+                    <li><strong>Instalar:</strong> escaneie antes de instalar no equipamento.</li>
+                    <li><strong>Remover:</strong> direcione para quarentena, reaproveitamento ou não conforme.</li>
                 </ol>
-                <p style="margin-top: 15px; color: #00ff88;"><strong>${icon('checkCircle')} BOA PRÁTICA:</strong> Escanear em CADA movimentação mantém conformidade 100%!</p>
+                <p style="margin-top: 15px; color: #00ff88;"><strong>${icon('checkCircle')} Boa prática:</strong> escanear cada movimentação mantém o histórico confiável.</p>
             `;
             break;
         case 'AUDITOR':
             instructions = `
-                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Responsabilidades AUDITOR:</h3>
+                <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Responsabilidades AUDITOR</h3>
                 <ol style="line-height: 2;">
-                    <li><strong>Monitorar conformidade:</strong> Painel mostra operações sem escaneamento</li>
-                    <li><strong>Identificar responsáveis:</strong> Cada não-conformidade registra operador</li>
-                    <li><strong>Análise de tendências:</strong> Quem/onde ocorrem mais falhas?</li>
-                    <li><strong>Relatórios:</strong> Clique "Ver Detalhes" para análise completa</li>
+                    <li><strong>Monitorar:</strong> acompanhe painéis e histórico completo.</li>
+                    <li><strong>Investigar:</strong> valide responsáveis e motivos das falhas.</li>
+                    <li><strong>Reportar:</strong> use os painéis de conformidade e descarte.</li>
                 </ol>
-                <p style="margin-top: 15px; color: #ff4757;"><strong>${icon('alertTriangle')} ALERTA:</strong> Não-conformidades quebram cadeia de custódia e invalidam garantias!</p>
+                <p style="margin-top: 15px; color: #ff4757;"><strong>${icon('alertTriangle')} Alerta:</strong> uma lacuna de rastreabilidade compromete garantia e auditoria.</p>
             `;
             break;
+        default:
+            instructions = '';
     }
 
     instructionsDiv.innerHTML = instructions;
 }
 
-// ===== CRIAÇÃO DE ELEMENTOS DE PEÇAS =====
-function createSpareElement(name, code, spareIcon) {
-    const spareDiv = document.createElement('div');
-    spareDiv.className = 'spare-item';
-    spareDiv.draggable = true;
-    spareDiv.id = code;
-    spareDiv.dataset.name = name;
-    spareDiv.dataset.code = code;
-    spareDiv.dataset.state = 'RECEBIDO';
-    spareDiv.dataset.scanCount = '0';
+function getSpareControlMarkup(spare) {
+    if (!state.currentUser) return '';
 
-    spareDiv.innerHTML = `
-        <span class="spare-icon">${icon(spareIcon)}</span>
-        <div class="spare-info">
-            <div class="spare-name">${escapeHtml(name)}</div>
-            <div class="spare-code">${escapeHtml(code)}</div>
-            <div class="spare-status">Estado: RECEBIDO | Scans: 0</div>
-        </div>
-    `;
+    const actions = [];
+    const currentState = spare.currentState || 'RECEBIDO';
 
-    spareDiv.addEventListener('dragstart', drag);
-    spareDiv.addEventListener('contextmenu', showContextMenu);
+    if (state.currentUser.role === 'ALMOX' && currentState === 'RECEBIDO') {
+        actions.push(
+            `<button class="action-btn" style="margin-top:6px;" onclick="openRegisterTransporterModal('${spare.code}')">${icon('truck')} Registrar Saída</button>`
+        );
+    }
 
-    const sparesList = document.getElementById('sparesList');
-    if (sparesList) sparesList.appendChild(spareDiv);
+    if (state.currentUser.role === 'TRANSPORTADORA' && currentState === 'EM_TRANSITO') {
+        actions.push(
+            `<button class="action-btn" style="margin-top:6px;" onclick="openArrivalModal('${spare.code}')">${icon('clock')} Registrar Chegada</button>`
+        );
+        actions.push(
+            `<button class="action-btn" style="margin-top:6px;" onclick="openDeliveryModal('${spare.code}')">${icon('upload')} Registrar Entrega</button>`
+        );
+    }
 
-    if (!state.sparesData[code]) {
-        state.sparesData[code] = {
-            code, name, icon: spareIcon,
-            history: [],
-            currentState: 'RECEBIDO',
-            scanCount: 0,
-            nonCompliantOps: []
-        };
-        saveAll();
+    return actions.join('');
+}
+
+function applySpareClasses(spareDiv, spare) {
+    spareDiv.classList.remove('installed', 'in-transit', 'removed', 'non-compliant');
+
+    switch (spare.currentState) {
+        case 'INSTALADO':
+            spareDiv.classList.add('installed');
+            break;
+        case 'EM_TRANSITO':
+            spareDiv.classList.add('in-transit');
+            break;
+        case 'QUARENTENA':
+        case 'NAO_CONFORME':
+            spareDiv.classList.add('removed');
+            break;
+        default:
+            break;
+    }
+
+    if (spare.nonCompliantOps?.length) {
+        spareDiv.classList.add('non-compliant');
     }
 }
 
-function recreateSpareElement(spare) {
+function buildSpareElement(spare) {
     const spareDiv = document.createElement('div');
     spareDiv.className = 'spare-item';
     spareDiv.draggable = true;
@@ -345,60 +397,58 @@ function recreateSpareElement(spare) {
     spareDiv.dataset.name = spare.name;
     spareDiv.dataset.code = spare.code;
     spareDiv.dataset.state = spare.currentState || 'RECEBIDO';
-    spareDiv.dataset.scanCount = spare.scanCount || '0';
+    spareDiv.dataset.scanCount = String(spare.scanCount || 0);
+
     if (spare.lastScan) spareDiv.dataset.lastScan = spare.lastScan;
     if (spare.transportadora) spareDiv.dataset.transportadora = spare.transportadora;
     if (spare.shelf) spareDiv.dataset.shelf = spare.shelf;
+    if (spare.equip) spareDiv.dataset.equip = spare.equip;
+    if (spare.hours !== undefined) spareDiv.dataset.hours = String(spare.hours);
 
-    if (spare.currentState === 'INSTALADO') spareDiv.classList.add('installed');
-    else if (spare.currentState === 'EM_TRANSITO') spareDiv.classList.add('in-transit');
-    else if (spare.currentState === 'REMOVIDO' || spare.currentState === 'QUARENTENA') spareDiv.classList.add('removed');
-
-    if (spare.nonCompliantOps && spare.nonCompliantOps.length > 0) {
-        spareDiv.classList.add('non-compliant');
-    }
+    applySpareClasses(spareDiv, spare);
 
     spareDiv.innerHTML = `
-        <span class="spare-icon">${icon(spare.icon)}</span>
+        <span class="spare-icon">${renderIcon(spare.icon)}</span>
         <div class="spare-info">
             <div class="spare-name">${escapeHtml(spare.name)}</div>
             <div class="spare-code">${escapeHtml(spare.code)}</div>
-            <div class="spare-status">Estado: ${escapeHtml(spare.currentState || 'RECEBIDO')} | Scans: ${spare.scanCount || 0}</div>
+            <div class="spare-status">Estado: ${escapeHtml(spare.currentState || 'RECEBIDO')} | Scans: ${escapeHtml(spare.scanCount || 0)}</div>
         </div>
-        ${spare.nonCompliantOps && spare.nonCompliantOps.length > 0 ? '<div class="spare-warning">!</div>' : ''}
-        ${(state.currentUser.role === 'ALMOX' && (spare.currentState === 'RECEBIDO' || spare.currentState === 'ESCANEADO')) ? `<button class='action-btn' style='margin-top:6px;' onclick='openRegisterTransporterModal(\"${spare.code}\")'>${icon('truck')} Registrar Saída/Transportador</button>` : ''}
-        ${(state.currentUser.role === 'TRANSPORTADORA' && spare.currentState === 'EM_TRANSITO') ? `<button class='action-btn' style='margin-top:6px;' onclick='openArrivalModal(\"${spare.code}\")'>${icon('clock')} Registrar Chegada no Destino</button><button class='action-btn' style='margin-top:6px;' onclick='openDeliveryModal(\"${spare.code}\")'>${icon('upload')} Registrar Entrega a Bordo</button>` : ''}
+        ${spare.nonCompliantOps?.length ? '<div class="spare-warning">!</div>' : ''}
+        ${getSpareControlMarkup(spare)}
     `;
-        <!-- Modal Chegada no Destino -->
-        <div id="arrivalModal" class="modal" style="display:none; z-index:9999;">
-            <div class="modal-content" style="max-width:400px;">
-                <div class="modal-header">
-                    <h2 class="modal-title">Registrar Chegada no Destino</h2>
-                    <button class="modal-close" onclick="closeArrivalModal()">✕</button>
-                </div>
-                <form id="arrivalForm" onsubmit="submitArrivalForm(event)">
-                    <label>Data/Hora de Chegada:<input type="datetime-local" id="arrivalDatetime" required></label><br>
-                    <input type="hidden" id="arrivalPartCode">
-                    <button type="submit" class="action-btn" style="margin-top:10px;">Registrar Chegada</button>
-                </form>
-            </div>
-        </div>
-        <!-- Modal Entrega a Bordo -->
-        <div id="registerTransporterModal" class="modal" style="display:none; z-index:9999;"></div>
-        <div id="arrivalModal" class="modal" style="display:none; z-index:9999;"></div>
-        <div id="deliveryModal" class="modal" style="display:none; z-index:9999;"></div>
-    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
-        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
-        const shelfSlot = target ? target.closest('.shelf-slot') : null;
-        if (shelfSlot) shelfSlot.classList.add('occupied');
-    } else if (stateName === 'INSTALADO') {
-        target = ensureSpareStagingArea();
-    } else if (stateName === 'QUARENTENA') {
-        target = document.getElementById('quarantineList');
-    } else if (stateName === 'DESCARTADO_FINAL') {
-        return;
+
+    spareDiv.addEventListener('dragstart', drag);
+    spareDiv.addEventListener('contextmenu', showContextMenu);
+    return spareDiv;
+}
+
+function createSpareElement(name, code, spareIcon) {
+    const spare = {
+        code,
+        name,
+        icon: spareIcon,
+        history: [],
+        currentState: 'RECEBIDO',
+        scanCount: 0,
+        nonCompliantOps: [],
+        transportEvents: []
+    };
+
+    if (!state.sparesData[code]) {
+        state.sparesData[code] = spare;
     }
-    if (target) target.appendChild(spareDiv);
+
+    const spareDiv = buildSpareElement(spare);
+    placeSpareElement(spareDiv);
+    saveAll();
+    return spareDiv;
+}
+
+function recreateSpareElement(spare) {
+    const spareDiv = buildSpareElement(spare);
+    placeSpareElement(spareDiv);
+    return spareDiv;
 }
 
 function ensureSpareStagingArea() {
@@ -417,6 +467,73 @@ function ensureSpareStagingArea() {
     return staging;
 }
 
+function placeSpareElement(spareDiv) {
+    const stateName = spareDiv.dataset.state || 'RECEBIDO';
+    let target = null;
+
+    if (['RECEBIDO', 'AGUARDANDO_COLETA'].includes(stateName)) {
+        target = document.getElementById('sparesList');
+    } else if (stateName === 'EM_TRANSITO') {
+        target = document.getElementById('transportInTransit') || ensureInTransitForBordoPanel();
+    } else if (stateName === 'ENTREGUE_BORDO') {
+        target = document.getElementById('bordoList');
+    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
+        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
+        const shelfSlot = target?.closest('.shelf-slot');
+        if (shelfSlot) shelfSlot.classList.add('occupied');
+    } else if (stateName === 'NAO_CONFORME') {
+        target = document.getElementById('shelfNAO_CONFORME');
+        const shelfSlot = target?.closest('.shelf-slot');
+        if (shelfSlot) shelfSlot.classList.add('occupied');
+    } else if (stateName === 'INSTALADO') {
+        target = ensureSpareStagingArea();
+    } else if (stateName === 'QUARENTENA') {
+        target = document.getElementById('quarantineList');
+    } else if (stateName === 'DESCARTADO_FINAL') {
+        return;
+    }
+
+    if (!target) {
+        target = ensureSpareStagingArea();
+    }
+
+    target.appendChild(spareDiv);
+}
+
+function clearRenderedSpares() {
+    const selectors = [
+        '#sparesList',
+        '#transportInTransit',
+        '#bordoList',
+        '#quarantineList',
+        '#inTransitForBordo',
+        '#equipMCPBB',
+        '#equipMCPBE',
+        '#equipGERADOR',
+        '#shelfA1',
+        '#shelfA2',
+        '#shelfA3',
+        '#shelfB1',
+        '#shelfB2',
+        '#shelfB3',
+        '#shelfNAO_CONFORME',
+        '#spareStaging'
+    ];
+
+    selectors.forEach((selector) => {
+        const element = document.querySelector(selector);
+        if (element) element.innerHTML = '';
+    });
+
+    document.querySelectorAll('.equipment-slot').forEach((slot) => {
+        slot.classList.remove('filled');
+    });
+
+    document.querySelectorAll('.shelf-slot').forEach((slot) => {
+        slot.classList.remove('occupied');
+    });
+}
+
 function restoreInstalledPart(equipName, installedData) {
     const code = installedData.code;
     const element = document.getElementById(code);
@@ -426,113 +543,76 @@ function restoreInstalledPart(equipName, installedData) {
         return;
     }
 
-    const equipContentId = equipName === 'MCP_BB' ? 'equipMCPBB' :
-                           equipName === 'MCP_BE' ? 'equipMCPBE' : 'equipGERADOR';
+    const equipContentId = equipName === 'MCP_BB'
+        ? 'equipMCPBB'
+        : equipName === 'MCP_BE'
+            ? 'equipMCPBE'
+            : 'equipGERADOR';
+
     const targetDiv = document.getElementById(equipContentId);
-    if (targetDiv) targetDiv.appendChild(element);
+    if (!targetDiv) return;
+
+    targetDiv.appendChild(element);
 
     const equipSlot = document.querySelector(`[data-equip="${equipName}"]`);
     if (equipSlot) equipSlot.classList.add('filled');
 
     element.dataset.state = 'INSTALADO';
     element.dataset.equip = equipName;
-    element.dataset.hours = installedData.hours;
+    element.dataset.hours = String(installedData.hours);
     element.classList.add('installed');
     updateSpareStatus(element);
 }
 
 function updateSpareStatus(element) {
     const statusDiv = element.querySelector('.spare-status');
-    if (statusDiv) {
-        const scanCount = element.dataset.scanCount || 0;
-        statusDiv.textContent = `Estado: ${element.dataset.state} | Scans: ${scanCount}`;
-    }
+    if (!statusDiv) return;
+
+    statusDiv.textContent = `Estado: ${element.dataset.state} | Scans: ${element.dataset.scanCount || 0}`;
 }
 
-// ===== ADICIONAR PEÇA =====
 function addSpare() {
-    if (state.currentUser && state.currentUser.role !== 'ALMOX') {
+    if (state.currentUser?.role !== 'ALMOX') {
         alert('ACESSO NEGADO\n\nApenas ALMOXARIFE pode receber peças de fornecedores.');
         return;
     }
 
-
     const spareName = prompt('Nome da peça:');
-    if (!spareName || !spareName.trim() || spareName.length < 3) {
+    if (!spareName || !spareName.trim() || spareName.trim().length < 3) {
         alert('Nome da peça inválido.');
         return;
     }
 
     const spareCode = `SP-${new Date().getFullYear()}-${String(state.spareCounter).padStart(3, '0')}`;
-    state.spareCounter++;
-    localStorage.setItem('spareCounter', state.spareCounter);
+    state.spareCounter += 1;
 
-    createSpareElement(spareName, spareCode, 'wrench');
+    createSpareElement(spareName.trim(), spareCode, 'wrench');
 
-    const operator = state.currentUser ? state.currentUser.name : 'Sistema';
-    addLog(`${icon('package')} RECEBIDO no ALMOXARIFADO: ${escapeHtml(spareName)} (${escapeHtml(spareCode)}) | Recebedor: ${escapeHtml(operator)}`, 'success');
-
-    addSpareEvent(spareCode, 'RECEBIDO', {
+    const operator = state.currentUser?.name || 'Sistema';
+    const blockchainEvent = addSpareEvent(spareCode, 'RECEBIDO', {
         operator,
         location: 'ALMOXARIFADO'
     });
 
-    updateDashboard();
-}
+    addLog(
+        `${icon('package')} RECEBIDO no ALMOXARIFADO: ${escapeHtml(spareName.trim())} (${escapeHtml(spareCode)}) | Recebedor: ${escapeHtml(operator)}${formatBlockchainTag(blockchainEvent)}`,
+        'success'
+    );
 
-// ===== DASHBOARD =====
-function updateDashboard() {
-    ensureSparesData();
-    let totalParts = 0;
-    let inTransit = 0;
-    let installed = 0;
-    let inQuarantine = 0;
-    let totalScans = 0;
-    let totalOps = 0;
-    const allSpares = document.querySelectorAll('.spare-item');
-    totalParts = allSpares.length;
-    allSpares.forEach(spare => {
-        const st = spare.dataset.state;
-        const scanCount = parseInt(spare.dataset.scanCount || 0);
-        if (st === 'EM_TRANSITO') inTransit++;
-        if (st === 'INSTALADO') installed++;
-        if (st === 'QUARENTENA') inQuarantine++;
-        totalScans += scanCount;
-    });
-    for (let code in state.sparesData) {
-        if (state.sparesData[code] && state.sparesData[code].history) {
-            totalOps += state.sparesData[code].history.length;
-        }
-    }
-    if (totalOps === 0) totalOps = totalParts;
-    document.getElementById('kpiTotalParts').textContent = totalParts;
-    document.getElementById('kpiTotalScans').textContent = totalScans;
-    document.getElementById('kpiInTransit').textContent = inTransit;
-    document.getElementById('kpiInstalled').textContent = installed;
-    document.getElementById('kpiQuarantine').textContent = inQuarantine;
-    document.getElementById('kpiDisposed').textContent = state.disposalRecords ? state.disposalRecords.length : 0;
-    document.getElementById('kpiNonCompliant').textContent = state.nonComplianceList ? state.nonComplianceList.length : 0;
-    const compliance = totalOps > 0 ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0) : 100;
-    document.getElementById('kpiCompliance').textContent = compliance + '%';
-    if (typeof updateComplianceGrid === 'function') updateComplianceGrid();
-    console.log('[DASH] Dashboard atualizado:', {
-        totalParts, totalScans, inTransit, installed, inQuarantine,
-        disposed: state.disposalRecords ? state.disposalRecords.length : 0, totalOps,
-        compliance: compliance + '%',
-        nonCompliance: state.nonComplianceList ? state.nonComplianceList.length : 0
-    });
+    updateDashboard();
 }
 
 function updateComplianceGrid() {
     const grid = document.getElementById('complianceGrid');
+    if (!grid) return;
 
-    if (state.nonComplianceList.length === 0) {
-        grid.innerHTML = '<div style="text-align: center; color: #00ff88; padding: 20px;">' + icon('checkCircle') + ' Sem não-conformidades</div>';
+    if (!state.nonComplianceList.length) {
+        grid.innerHTML = `<div style="text-align: center; color: #00ff88; padding: 20px;">${icon('checkCircle')} Sem não-conformidades</div>`;
         return;
     }
 
-    const recent = state.nonComplianceList.slice(-3);
-    grid.innerHTML = recent.map(nc => `
+    const recent = state.nonComplianceList.slice(-3).reverse();
+    grid.innerHTML = recent.map((nc) => `
         <div class="compliance-item critical">
             <strong>${escapeHtml(nc.operation)}</strong><br>
             <small>${escapeHtml(nc.spare)} | ${escapeHtml(nc.operator)}</small><br>
@@ -541,110 +621,67 @@ function updateComplianceGrid() {
     `).join('');
 }
 
-// ===== INICIALIZAÇÃO DE PEÇAS =====
-function initializeSpares() {
-    ensureSparesData();
-    const savedSpares = localStorage.getItem('sparesData');
-    if (savedSpares) {
-        try {
-            state.sparesData = JSON.parse(savedSpares);
-            if (!state.sparesData || typeof state.sparesData !== 'object') state.sparesData = {};
-            for (let code in state.sparesData) {
-                recreateSpareElement(state.sparesData[code]);
-            }
-            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
-        } catch (e) { console.error('Erro ao carregar peças:', e); state.sparesData = {}; }
-    }
-    updateDashboard();
-}
+function updateDashboard() {
+    hydrateState();
 
-// [CORREÇÃO] Garante que state.sparesData sempre existe antes de updateDashboard
-function ensureSparesData() {
-    if (!state.sparesData || typeof state.sparesData !== 'object') {
-        state.sparesData = {};
-    }
-}
-
-// Patch seguro para updateDashboard
-const originalUpdateDashboard = updateDashboard;
-window.updateDashboard = function() {
-    ensureSparesData();
+    const spares = Object.values(state.sparesData);
     let totalParts = 0;
     let inTransit = 0;
     let installed = 0;
     let inQuarantine = 0;
     let totalScans = 0;
     let totalOps = 0;
-    const allSpares = document.querySelectorAll('.spare-item');
-    totalParts = allSpares.length;
-    allSpares.forEach(spare => {
-        const st = spare.dataset.state;
-        const scanCount = parseInt(spare.dataset.scanCount || 0);
-        if (st === 'EM_TRANSITO') inTransit++;
-        if (st === 'INSTALADO') installed++;
-        if (st === 'QUARENTENA') inQuarantine++;
-        totalScans += scanCount;
-    });
-    for (let code in state.sparesData) {
-        if (state.sparesData[code] && state.sparesData[code].history) {
-            totalOps += state.sparesData[code].history.length;
-        }
-    }
-    if (totalOps === 0) totalOps = totalParts;
-    document.getElementById('kpiTotalParts').textContent = totalParts;
-    document.getElementById('kpiTotalScans').textContent = totalScans;
-    document.getElementById('kpiInTransit').textContent = inTransit;
-    document.getElementById('kpiInstalled').textContent = installed;
-    document.getElementById('kpiQuarantine').textContent = inQuarantine;
-    document.getElementById('kpiDisposed').textContent = state.disposalRecords ? state.disposalRecords.length : 0;
-    document.getElementById('kpiNonCompliant').textContent = state.nonComplianceList ? state.nonComplianceList.length : 0;
-    const compliance = totalOps > 0 ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0) : 100;
-    document.getElementById('kpiCompliance').textContent = compliance + '%';
-    if (typeof updateComplianceGrid === 'function') updateComplianceGrid();
-    console.log('[DASH] Dashboard atualizado:', {
-        totalParts, totalScans, inTransit, installed, inQuarantine,
-        disposed: state.disposalRecords ? state.disposalRecords.length : 0, totalOps,
-        compliance: compliance + '%',
-        nonCompliance: state.nonComplianceList ? state.nonComplianceList.length : 0
-    });
-};
 
-// Patch seguro para placeSpareElement
-window.placeSpareElement = function(spareDiv) {
-    const stateName = spareDiv.dataset.state || 'RECEBIDO';
-    let target = null;
-    if (stateName === 'RECEBIDO' || stateName === 'ESCANEADO') {
-        target = document.getElementById('sparesList');
-    } else if (stateName === 'EM_TRANSITO') {
-        target = document.getElementById('transportInTransit');
-        if (!target) {
-            // fallback seguro
-            let panel = document.getElementById('inTransitForBordo');
-            if (!panel) {
-                const panelsGrid = document.getElementById('panelsGrid');
-                if (panelsGrid) {
-                    const transitPanel = document.createElement('div');
-                    transitPanel.className = 'panel';
-                    transitPanel.innerHTML = `
-                        <div class="panel-header" style="border-bottom-color: #ffa502;\">\n                            <span class="panel-icon">${icon('truck')}</span>\n                            <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>\n                        </div>\n                        <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;\">\n                            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.\n                        </p>\n                        <div id="inTransitForBordo" style="min-height: 40px;\"></div>\n                    `;
-                    panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
-                    panel = transitPanel.querySelector('#inTransitForBordo');
-                }
-            }
-            target = panel;
+    spares.forEach((spare) => {
+        if (spare.currentState !== 'DESCARTADO_FINAL') {
+            totalParts += 1;
         }
-    } else if (stateName === 'ENTREGUE_BORDO') {
-        target = document.getElementById('bordoList');
-    } else if (stateName === 'ARMAZENADO' && spareDiv.dataset.shelf) {
-        target = document.getElementById(`shelf${spareDiv.dataset.shelf}`);
-        const shelfSlot = target ? target.closest('.shelf-slot') : null;
-        if (shelfSlot) shelfSlot.classList.add('occupied');
-    } else if (stateName === 'INSTALADO') {
-        target = ensureSpareStagingArea();
-    } else if (stateName === 'QUARENTENA') {
-        target = document.getElementById('quarantineList');
-    } else if (stateName === 'DESCARTADO_FINAL') {
-        return;
-    }
-    if (target) target.appendChild(spareDiv);
-};
+
+        if (spare.currentState === 'EM_TRANSITO') inTransit += 1;
+        if (spare.currentState === 'INSTALADO') installed += 1;
+        if (spare.currentState === 'QUARENTENA') inQuarantine += 1;
+
+        totalScans += parseInt(spare.scanCount || 0, 10);
+        totalOps += Array.isArray(spare.history) ? spare.history.length : 0;
+    });
+
+    if (totalOps === 0) totalOps = totalParts;
+
+    const totalDisposed = state.disposalRecords.length;
+    const compliance = totalOps > 0
+        ? Math.min(100, ((totalScans / totalOps) * 100)).toFixed(0)
+        : '100';
+
+    const bindings = {
+        kpiTotalParts: totalParts,
+        kpiTotalScans: totalScans,
+        kpiInTransit: inTransit,
+        kpiInstalled: installed,
+        kpiQuarantine: inQuarantine,
+        kpiDisposed: totalDisposed,
+        kpiNonCompliant: state.nonComplianceList.length,
+        kpiCompliance: `${compliance}%`
+    };
+
+    Object.entries(bindings).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = String(value);
+    });
+
+    updateComplianceGrid();
+}
+
+function initializeSpares() {
+    hydrateState();
+    clearRenderedSpares();
+
+    Object.values(state.sparesData).forEach((spare) => {
+        recreateSpareElement(spare);
+    });
+
+    Object.entries(state.equipmentState).forEach(([equipName, installed]) => {
+        restoreInstalledPart(equipName, installed);
+    });
+
+    updateDashboard();
+}

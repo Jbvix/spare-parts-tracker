@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Interativo v4.0 - Rastreabilidade com Transportadora | Rebocadores ASD</title>
+    <title>SPARES-CHAIN v6.3 | Rastreabilidade de Sobressalentes</title>
 	 <!--
     ╔═══════════════════════════════════════════════════════════════════════════════╗
     ║                                                                               ║
@@ -842,13 +842,14 @@
             overflow-x: hidden;
         }
     </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <!-- Tela de Login -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
-            <h2>🚢 Sistema de Rastreabilidade v4.0</h2>
-            <p style="margin-bottom: 30px; color: #aaa;">Rebocadores ASD - Blockchain + Transportadora</p>
+            <h2>🚢 SPARES-CHAIN v6.3</h2>
+            <p style="margin-bottom: 30px; color: #aaa;">Rebocadores ASD - cadeia de custódia e conformidade</p>
             
             <div class="input-group">
                 <label>Nome Completo:</label>
@@ -922,14 +923,14 @@
     <div id="welcomeModal" class="modal active">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #00a3ff 5%, #094e3 100%);">
-                <h2 class="modal-title">⚓ Bem-vindo ao SPARES-CHAIN v6.1</h2>
+                <h2 class="modal-title">⚓ Bem-vindo ao SPARES-CHAIN v6.3</h2>
                 <button class="modal-close" onclick="closeWelcomeModal()">✕</button>
             </div>
             <div style="padding: 30px;">
                 <h3 style="color: #00d4ff; margin-bottom: 20px;">🎯 Sistema Completo de Rastreabilidade</h3>
                 
                 <div style="background: rgba(0, 212, 255, 0.1); border-left: 4px solid #00d4ff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-                    <strong>NOVO na v6.1:</strong><br>
+                    <strong>Atualizações recentes:</strong><br>
                     ✅ Peças removidas vão DIRETO para quarentena<br>
                     ✅ Botão RESET para limpar sistema<br>
                     ✅ Tutorial interativo de boas-vindas
@@ -992,7 +993,7 @@
     <div id="mainInterface" class="hidden">
         <!-- Cabeçalho -->
         <div class="header">
-            <div class="logo">⚓ SPARES-CHAIN v6.1 | Rastreabilidade + Logística Reversa | Jossian Brito </div>
+            <div class="logo">⚓ SPARES-CHAIN v6.3 | Rastreabilidade + Logística Reversa | Jossian Brito </div>
             <div class="user-info">
                 <button class="logout-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%); margin-right: 10px;" onclick="showComplianceAnalysis()">⚠️ Conformidade</button>
                 <button class="logout-btn" style="background: linear-gradient(135deg, #ff4757 0%, #c23616 100%); margin-right: 10px;" onclick="confirmReset()">🔄 RESET</button>
@@ -1059,8 +1060,8 @@
 
             <!-- Seção Introdutória -->
             <div class="intro-section">
-                <h1>📚 Manual Interativo v4.0 - Cadeia de Custódia Completa</h1>
-                <p><strong>Novidades v4.0:</strong> Papel de TRANSPORTADORA, Análise de conformidade, Rastreamento de falhas de escaneamento, Cadeia de custódia tripla (ALMOX → TRANSPORTADORA → BORDO)</p>
+                <h1>📚 Manual Interativo - Cadeia de Custódia Completa</h1>
+                <p><strong>Visão geral:</strong> recebimento, transporte, bordo, instalação, remoção, quarentena e descarte com rastreabilidade persistida.</p>
                 
                 <!-- Instruções específicas por papel -->
                 <div id="roleInstructions" style="margin-top: 20px; padding: 20px; background: rgba(0, 212, 255, 0.1); border-left: 5px solid #00d4ff; border-radius: 5px;">
@@ -1085,14 +1086,14 @@
                 <div id="activityLog" class="activity-log">
                     <div class="log-entry">
                         <span class="log-timestamp">[SISTEMA]</span>
-                        Sistema v4.0 inicializado. Aguardando operações...
+                        Sistema v6.3 inicializado. Aguardando operações...
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="text/plain" id="legacy-runtime">
         /*
          * Sistema de Rastreabilidade v4.0 - Transportadora + Conformidade
          * Autor: Jossian Brito
@@ -2824,5 +2825,14 @@
             return docNumber;
         }
     </script>
+    <script src="js/icons.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/transporter.js"></script>
+    <script src="js/arrival_delivery.js"></script>
+    <script src="js/handlers.js"></script>
+    <script src="js/compliance.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

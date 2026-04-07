@@ -51,22 +51,36 @@ function showHistory(code) {
         if (typeof value === 'object') return escapeHtml(JSON.stringify(value));
         return escapeHtml(String(value));
     };
+    const renderBlockchainInfo = blockchain => {
+        if (!blockchain) return '';
+        return `
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,212,255,0.2); font-size: 12px; color: #8fdcff;">
+                <strong>Processo:</strong> ${escapeHtml(blockchain.processId)}<br>
+                <strong>Bloco:</strong> ${escapeHtml(blockchain.blockId)} |
+                <strong>Tx:</strong> ${escapeHtml(blockchain.txId)}<br>
+                <strong>PrevHash:</strong> <code>${escapeHtml(blockchain.previousHash)}</code><br>
+                <strong>Hash:</strong> <code>${escapeHtml(blockchain.hash)}</code>
+            </div>
+        `;
+    };
 
     content.innerHTML = `
         <button class="action-btn" style="float:right;margin-bottom:10px;" onclick="exportHistory('${code}')">${icon('download')} Exportar Histórico</button>
-        <h3 style="color: #00d4ff; margin-bottom: 20px;">${icon(spare.icon)} ${escapeHtml(spare.name)} (${escapeHtml(spare.code)})</h3>
+        <h3 style="color: #00d4ff; margin-bottom: 20px;">${renderIcon(spare.icon)} ${escapeHtml(spare.name)} (${escapeHtml(spare.code)})</h3>
         <div style="margin-bottom: 20px;">
-            <strong>Total de Escaneamentos:</strong> ${spare.scanCount}<br>
-            <strong>Não-conformidades:</strong> ${spare.nonCompliantOps.length}
+            <strong>Total de Escaneamentos:</strong> ${escapeHtml(spare.scanCount || 0)}<br>
+            <strong>Não-conformidades:</strong> ${escapeHtml(spare.nonCompliantOps?.length || 0)}<br>
+            <strong>Processo Blockchain:</strong> <code>${escapeHtml(spare.blockchainProcessId || '-')}</code>
         </div>
         <div class="history-timeline">
-            ${spare.history.map((event) => `
+            ${(spare.history || []).map((event) => `
                 <div class="history-item">
                     <strong>${escapeHtml(event.type)}</strong><br>
                     <small>${new Date(event.timestamp).toLocaleString('pt-BR')}</small><br>
-                    ${Object.entries(event.data).map(([key, value]) =>
+                    ${Object.entries(event.data || {}).map(([key, value]) =>
                         `${escapeHtml(key)}: ${formatHistoryValue(value)}`
                     ).join('<br>')}
+                    ${renderBlockchainInfo(event.blockchain)}
                 </div>
             `).join('')}
             ${(spare.transportEvents && spare.transportEvents.length > 0) ? `
@@ -75,11 +89,12 @@ function showHistory(code) {
                     <div class='history-item'>
                         <strong>${escapeHtml(ev.type)}</strong><br>
                         <small>${ev.timestamp ? new Date(ev.timestamp).toLocaleString('pt-BR') : (ev.datetime ? new Date(ev.datetime).toLocaleString('pt-BR') : '')}</small><br>
-                        Operador: ${escapeHtml(ev.operator || '-')}, Empresa: ${escapeHtml(ev.company || '-')}
-                        ${ev.name ? `<br>Nome: ${escapeHtml(ev.name)}` : ''}
-                        ${ev.doc ? `<br>Documento: ${escapeHtml(ev.doc)}` : ''}
-                        ${ev.vehicle ? `<br>Veículo: ${escapeHtml(ev.vehicle)}` : ''}
-                        ${ev.contact ? `<br>Contato: ${escapeHtml(ev.contact)}` : ''}
+                        Operador: ${escapeHtml(ev.operator || ev.data?.operator || '-')}, Empresa: ${escapeHtml(ev.company || ev.data?.company || '-')}
+                        ${(ev.name || ev.data?.name) ? `<br>Nome: ${escapeHtml(ev.name || ev.data?.name)}` : ''}
+                        ${(ev.doc || ev.data?.doc) ? `<br>Documento: ${escapeHtml(ev.doc || ev.data?.doc)}` : ''}
+                        ${(ev.vehicle || ev.data?.vehicle) ? `<br>Veículo: ${escapeHtml(ev.vehicle || ev.data?.vehicle)}` : ''}
+                        ${(ev.contact || ev.data?.contact) ? `<br>Contato: ${escapeHtml(ev.contact || ev.data?.contact)}` : ''}
+                        ${renderBlockchainInfo(ev.blockchain)}
                     </div>
                 `).join('')}
             ` : ''}
@@ -89,28 +104,31 @@ function showHistory(code) {
     document.getElementById('historyModal').classList.add('active');
 }
 
+function exportHistory(code) {
+    const spare = state.sparesData[code];
+    if (!spare) return;
+
+    const exportObj = {
+        code: spare.code,
+        name: spare.name,
+        icon: spare.icon,
+        blockchainProcessId: spare.blockchainProcessId,
+        scanCount: spare.scanCount,
+        nonCompliantOps: spare.nonCompliantOps,
+        history: spare.history,
+        transportEvents: spare.transportEvents || []
+    };
+
+    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportObj, null, 2))}`;
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute('href', dataStr);
+    dlAnchor.setAttribute('download', `historico_${spare.code}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    document.body.removeChild(dlAnchor);
+}
+
 function closeHistoryModal() {
-    // Exporta histórico e rastreamento logístico da peça em JSON
-    function exportHistory(code) {
-        const spare = state.sparesData[code];
-        if (!spare) return;
-        const exportObj = {
-            code: spare.code,
-            name: spare.name,
-            icon: spare.icon,
-            scanCount: spare.scanCount,
-            nonCompliantOps: spare.nonCompliantOps,
-            history: spare.history,
-            transportEvents: spare.transportEvents || []
-        };
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
-        const dlAnchor = document.createElement('a');
-        dlAnchor.setAttribute("href", dataStr);
-        dlAnchor.setAttribute("download", `historico_${spare.code}.json`);
-        document.body.appendChild(dlAnchor);
-        dlAnchor.click();
-        document.body.removeChild(dlAnchor);
-    }
     document.getElementById('historyModal').classList.remove('active');
 }
 
@@ -150,6 +168,9 @@ function showDisposalRecords() {
                     <strong>Horas Trabalhadas:</strong> <span style="color: #00d4ff;">${disposal.hoursWorked.toFixed(1)}h</span><br>
                     <strong>Motivo:</strong> ${escapeHtml(disposal.reason)}<br>
                     <strong>Operador:</strong> ${escapeHtml(disposal.transportOperator || disposal.removedBy || 'N/A')}<br>
+                    <strong>Processo:</strong> <code>${escapeHtml(disposal.blockchain?.processId || '-')}</code><br>
+                    <strong>Bloco:</strong> ${escapeHtml(disposal.blockchain?.blockId || '-')} |
+                    <strong>Tx:</strong> ${escapeHtml(disposal.blockchain?.txId || '-')}<br>
                     <strong>Hash:</strong> <code>${disposal.hash}</code>
                 </div>
             `).reverse().join('')}
@@ -203,6 +224,12 @@ function showDisposalTransport() {
         const spare = state.sparesData[code];
 
         const removalEvent = spare ? spare.history.find(h => h.type === 'REMOVIDO') : null;
+        const discardEvent = addSpareEvent(code, 'DESCARTADO_FINAL', {
+            disposalDoc,
+            transportCompany,
+            operator: transportOperator,
+            collectionDate
+        });
 
         const disposalRecord = {
             code, name,
@@ -217,18 +244,12 @@ function showDisposalTransport() {
             transportOperator,
             collectionDate,
             disposalDate: collectionDate,
-            hash: generateHash(code, disposalDoc, Date.now())
+            hash: discardEvent.blockchain.hash,
+            blockchain: discardEvent.blockchain
         };
 
         state.disposalRecords.push(disposalRecord);
         processedItems.push(disposalRecord);
-
-        addSpareEvent(code, 'DESCARTADO_FINAL', {
-            disposalDoc,
-            transportCompany,
-            operator: transportOperator,
-            collectionDate
-        });
 
         item.remove();
     });
@@ -237,7 +258,7 @@ function showDisposalTransport() {
 
     addLog(
         `${icon('truck')} LOGÍSTICA REVERSA: ${processedItems.length} item(ns) coletado(s) | ` +
-        `Doc: ${disposalDoc} | ${transportOperator} (${transportCompany})`,
+        `Doc: ${escapeHtml(disposalDoc)} | ${escapeHtml(transportOperator)} (${escapeHtml(transportCompany)})${formatBlockchainTag(processedItems[0]?.blockchain)}`,
         'danger'
     );
 
@@ -298,6 +319,9 @@ function showDisposalDocument(docNumber, items) {
                     <strong>Equipamento:</strong> ${escapeHtml(item.equipment)} |
                     <strong>Motivo:</strong> ${escapeHtml(item.reason)}<br>
                     <strong>Removido por:</strong> ${escapeHtml(item.removedBy)}<br>
+                    <strong>Processo:</strong> <code>${escapeHtml(item.blockchain?.processId || '-')}</code><br>
+                    <strong>Bloco:</strong> ${escapeHtml(item.blockchain?.blockId || '-')} |
+                    <strong>Tx:</strong> ${escapeHtml(item.blockchain?.txId || '-')}<br>
                     <strong>Hash:</strong> <code>${item.hash}</code>
                 </div>
             </div>

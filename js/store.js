@@ -5,8 +5,8 @@
 
 // ===== ESTADO GLOBAL =====
 const state = {
-    spareCounter: parseInt(localStorage.getItem('spareCounter')) || 1,
-    disposalDocCounter: parseInt(localStorage.getItem('disposalDocCounter')) || 1,
+    spareCounter: parseInt(localStorage.getItem('spareCounter'), 10) || 1,
+    disposalDocCounter: parseInt(localStorage.getItem('disposalDocCounter'), 10) || 1,
     currentUser: null,
     sparesData: {},
     currentContextSpare: null,
@@ -16,6 +16,200 @@ const state = {
     quarantineItems: []
 };
 
+function parseStoredJson(key, fallback) {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+
+    try {
+        return JSON.parse(raw);
+    } catch (error) {
+        console.error(`Erro ao carregar ${key}:`, error);
+        return fallback;
+    }
+}
+
+function getCanonicalState(type, data = {}, previousState = 'RECEBIDO') {
+    switch (type) {
+        case 'ESCANEADO':
+            return previousState || 'RECEBIDO';
+        case 'COLETADO':
+        case 'EM_TRANSITO':
+            return 'EM_TRANSITO';
+        case 'ENTREGUE_BORDO':
+            return 'ENTREGUE_BORDO';
+        case 'ARMAZENADO':
+            return data.shelf === 'NAO_CONFORME' ? 'NAO_CONFORME' : 'ARMAZENADO';
+        case 'NAO_CONFORME':
+            return 'NAO_CONFORME';
+        case 'INSTALADO':
+            return 'INSTALADO';
+        case 'REMOVIDO':
+            if (data.destination === 'NAO_CONFORME') return 'NAO_CONFORME';
+            if (data.destination === 'PRATELEIRA_BORDO') return 'ARMAZENADO';
+            return 'QUARENTENA';
+        case 'QUARENTENA':
+            return 'QUARENTENA';
+        case 'DESCARTADO_FINAL':
+            return 'DESCARTADO_FINAL';
+        case 'AGUARDANDO_COLETA':
+            return 'AGUARDANDO_COLETA';
+        case 'RECEBIDO':
+        default:
+            return type || previousState || 'RECEBIDO';
+    }
+}
+
+function normalizeLoadedSpare(spare) {
+    const maxBlockchainHeight = (items = []) => items.reduce((max, item) => {
+        const current = Number(item?.blockchain?.blockNumber || 0);
+        return current > max ? current : max;
+    }, 0);
+
+    const collections = [
+        ...(Array.isArray(spare.history) ? spare.history : []),
+        ...(Array.isArray(spare.transportEvents) ? spare.transportEvents : [])
+    ];
+
+    const blockchainHeight = maxBlockchainHeight(collections);
+    const lastBlockchainEvent = collections.findLast?.((item) => item?.blockchain?.hash)
+        || [...collections].reverse().find((item) => item?.blockchain?.hash)
+        || null;
+
+    const normalized = {
+        code: spare.code || '',
+        name: spare.name || '',
+        icon: spare.icon || 'wrench',
+        history: Array.isArray(spare.history) ? spare.history : [],
+        scanCount: Number.isFinite(Number(spare.scanCount)) ? parseInt(spare.scanCount, 10) : 0,
+        nonCompliantOps: Array.isArray(spare.nonCompliantOps) ? spare.nonCompliantOps : [],
+        transportEvents: Array.isArray(spare.transportEvents) ? spare.transportEvents : [],
+        blockchainProcessId: spare.blockchainProcessId || createBlockchainProcessId(spare.code || 'PROCESSO', spare.code || Date.now()),
+        blockchainHeight,
+        blockchainLastHash: spare.blockchainLastHash || lastBlockchainEvent?.blockchain?.hash || ''
+    };
+
+    if (spare.lastScan) normalized.lastScan = spare.lastScan;
+    if (spare.transportadora) normalized.transportadora = spare.transportadora;
+    if (spare.shelf) normalized.shelf = spare.shelf;
+    if (spare.origin) normalized.origin = spare.origin;
+
+    let currentState = spare.currentState || 'RECEBIDO';
+    const lastEvent = normalized.history[normalized.history.length - 1];
+
+    if (lastEvent && lastEvent.type) {
+        currentState = getCanonicalState(
+            lastEvent.type,
+            lastEvent.data || {},
+            lastEvent.data?.previousState || currentState
+        );
+    } else {
+        currentState = getCanonicalState(currentState, spare, spare.previousState || 'RECEBIDO');
+    }
+
+    normalized.currentState = currentState;
+    return normalized;
+}
+
+function createBlockchainEventMetadata(spare, type, data = {}, timestamp = new Date().toISOString()) {
+    if (!spare.blockchainProcessId) {
+        spare.blockchainProcessId = createBlockchainProcessId(spare.code, timestamp);
+    }
+
+    const blockNumber = (spare.blockchainHeight || 0) + 1;
+    const previousHash = spare.blockchainLastHash || 'GENESIS';
+    const payloadFingerprint = JSON.stringify({
+        type,
+        timestamp,
+        previousHash,
+        data
+    });
+    const hash = generateHash(spare.code, type, payloadFingerprint);
+    const txId = `TX-${generateHash(spare.code, type, `${timestamp}-${blockNumber}`)}`;
+    const blockId = `BLK-${String(blockNumber).padStart(4, '0')}`;
+
+    spare.blockchainHeight = blockNumber;
+    spare.blockchainLastHash = hash;
+
+    return {
+        processId: spare.blockchainProcessId,
+        blockNumber,
+        blockId,
+        txId,
+        previousHash,
+        hash
+    };
+}
+
+function hydrateState() {
+    const spares = parseStoredJson('sparesData', {});
+    const normalizedSpares = {};
+
+    Object.entries(spares || {}).forEach(([code, spare]) => {
+        normalizedSpares[code] = normalizeLoadedSpare(spare || {});
+    });
+
+    state.sparesData = normalizedSpares;
+    state.equipmentState = parseStoredJson('equipmentState', {}) || {};
+    state.disposalRecords = parseStoredJson('disposalRecords', []) || [];
+    state.quarantineItems = parseStoredJson('quarantineItems', []) || [];
+    state.nonComplianceList = parseStoredJson('nonComplianceList', []) || [];
+    state.spareCounter = parseInt(localStorage.getItem('spareCounter'), 10) || 1;
+    state.disposalDocCounter = parseInt(localStorage.getItem('disposalDocCounter'), 10) || 1;
+
+    const installedByCode = new Map();
+    Object.entries(state.equipmentState).forEach(([equipName, installed]) => {
+        if (installed?.code) {
+            installedByCode.set(installed.code, { equipName, installed });
+        }
+    });
+
+    const quarantinedCodes = new Set(
+        (state.quarantineItems || [])
+            .map((item) => item?.code)
+            .filter(Boolean)
+    );
+
+    const disposedCodes = new Set(
+        (state.disposalRecords || [])
+            .map((item) => item?.code)
+            .filter(Boolean)
+    );
+
+    Object.values(state.sparesData).forEach((spare) => {
+        if (disposedCodes.has(spare.code)) {
+            spare.currentState = 'DESCARTADO_FINAL';
+            delete spare.shelf;
+            delete spare.equip;
+            delete spare.hours;
+            return;
+        }
+
+        const installedRef = installedByCode.get(spare.code);
+        if (installedRef) {
+            spare.currentState = 'INSTALADO';
+            spare.equip = installedRef.equipName;
+            spare.hours = installedRef.installed.hours;
+            delete spare.shelf;
+            return;
+        }
+
+        delete spare.equip;
+        delete spare.hours;
+
+        if (quarantinedCodes.has(spare.code)) {
+            spare.currentState = 'QUARENTENA';
+            delete spare.shelf;
+        }
+    });
+
+    return state;
+}
+
+// Mantido por compatibilidade com chamadas existentes.
+function loadAll() {
+    return hydrateState();
+}
+
 // ===== PERSISTÊNCIA =====
 function saveAll() {
     try {
@@ -24,118 +218,118 @@ function saveAll() {
         localStorage.setItem('disposalRecords', JSON.stringify(state.disposalRecords));
         localStorage.setItem('quarantineItems', JSON.stringify(state.quarantineItems));
         localStorage.setItem('nonComplianceList', JSON.stringify(state.nonComplianceList));
-        localStorage.setItem('spareCounter', state.spareCounter);
-        localStorage.setItem('disposalDocCounter', state.disposalDocCounter);
+        localStorage.setItem('spareCounter', String(state.spareCounter));
+        localStorage.setItem('disposalDocCounter', String(state.disposalDocCounter));
         console.log('[SAVE] Dados salvos:', {
-            peças: Object.keys(state.sparesData).length,
+            pecas: Object.keys(state.sparesData).length,
             equipamentos: Object.keys(state.equipmentState).length,
             descartes: state.disposalRecords.length,
             quarentena: state.quarantineItems.length,
             naoConformidades: state.nonComplianceList.length
         });
-    } catch (e) {
-        console.error('Erro ao salvar:', e);
-    }
-}
-
-function loadAll() {
-    const saved = key => localStorage.getItem(key);
-
-    // Peças
-    const sparesRaw = saved('sparesData');
-    if (sparesRaw) {
-        try {
-            state.sparesData = JSON.parse(sparesRaw);
-            addLog(`${icon('refresh')} ${Object.keys(state.sparesData).length} peça(s) carregada(s) do sistema`, 'success');
-        } catch (e) { console.error('Erro ao carregar peças:', e); }
-    }
-
-    // Equipamentos
-    const equipRaw = saved('equipmentState');
-    if (equipRaw) {
-        try {
-            state.equipmentState = JSON.parse(equipRaw);
-            addLog(`${icon('wrench')} ${Object.keys(state.equipmentState).length} equipamento(s) com peças instaladas`, 'success');
-        } catch (e) { console.error('Erro ao carregar equipamentos:', e); }
-    }
-
-    // Descartes
-    const disposalRaw = saved('disposalRecords');
-    if (disposalRaw) {
-        try {
-            state.disposalRecords = JSON.parse(disposalRaw);
-            addLog(`${icon('trash')} ${state.disposalRecords.length} descarte(s) registrado(s)`, 'warning');
-        } catch (e) { console.error('Erro ao carregar descartes:', e); }
-    }
-
-    // Quarentena
-    const quarantineRaw = saved('quarantineItems');
-    if (quarantineRaw) {
-        try {
-            state.quarantineItems = JSON.parse(quarantineRaw);
-            addLog(`${icon('alertTriangle')} ${state.quarantineItems.length} item(ns) em quarentena`, 'warning');
-        } catch (e) { console.error('Erro ao carregar quarentena:', e); }
-    }
-
-    // Não-conformidades
-    const ncRaw = saved('nonComplianceList');
-    if (ncRaw) {
-        try {
-            state.nonComplianceList = JSON.parse(ncRaw);
-            if (state.nonComplianceList.length > 0) {
-                addLog(`${icon('alertTriangle')} ${state.nonComplianceList.length} não-conformidade(s) registrada(s)`, 'danger');
-            }
-        } catch (e) { console.error('Erro ao carregar não-conformidades:', e); }
+    } catch (error) {
+        console.error('Erro ao salvar:', error);
     }
 }
 
 // ===== GESTÃO DE EVENTOS =====
-function addSpareEvent(code, type, data) {
+function addSpareEvent(code, type, data = {}) {
     if (!state.sparesData[code]) {
         state.sparesData[code] = {
             code,
+            name: data.name || '',
+            icon: data.icon || 'wrench',
             history: [],
-            currentState: type,
+            currentState: 'RECEBIDO',
             scanCount: 0,
-            nonCompliantOps: []
+            nonCompliantOps: [],
+            transportEvents: []
         };
     }
 
-    state.sparesData[code].history.push({
+    const spare = state.sparesData[code];
+    const previousState = spare.currentState || 'RECEBIDO';
+    const timestamp = new Date().toISOString();
+    const blockchain = createBlockchainEventMetadata(spare, type, data, timestamp);
+
+    const event = {
         type,
-        timestamp: new Date().toISOString(),
-        data
-    });
-    state.sparesData[code].currentState = type;
+        timestamp,
+        data,
+        blockchain
+    };
+
+    spare.history.push(event);
+
+    spare.currentState = getCanonicalState(type, data, data.previousState || previousState);
 
     if (type === 'ESCANEADO') {
-        state.sparesData[code].lastScan = new Date().toISOString();
-        delete state.sparesData[code].shelf;
+        spare.lastScan = new Date().toISOString();
     }
-    if (type === 'COLETADO') {
-        state.sparesData[code].transportadora = data.operator;
-        delete state.sparesData[code].shelf;
+
+    if (spare.currentState === 'EM_TRANSITO' && data.operator) {
+        spare.transportadora = data.operator;
+        delete spare.shelf;
     }
-    if (type === 'ENTREGUE_BORDO') {
-        delete state.sparesData[code].shelf;
+
+    if (spare.currentState === 'ARMAZENADO' && data.shelf) {
+        spare.shelf = data.shelf;
     }
-    if (type === 'ARMAZENADO') {
-        state.sparesData[code].shelf = data.shelf;
+
+    if (spare.currentState === 'NAO_CONFORME') {
+        spare.shelf = 'NAO_CONFORME';
     }
-    if (type === 'INSTALADO' || type === 'REMOVIDO' || type === 'DESCARTADO_FINAL' || type === 'RECEBIDO') {
-        delete state.sparesData[code].shelf;
+
+    if (['RECEBIDO', 'AGUARDANDO_COLETA', 'ENTREGUE_BORDO', 'INSTALADO', 'QUARENTENA', 'DESCARTADO_FINAL'].includes(spare.currentState)) {
+        delete spare.shelf;
     }
 
     saveAll();
+    return event;
+}
+
+function addTransportEvent(code, type, data = {}) {
+    if (!state.sparesData[code]) {
+        state.sparesData[code] = {
+            code,
+            name: data.name || '',
+            icon: data.icon || 'wrench',
+            history: [],
+            currentState: 'RECEBIDO',
+            scanCount: 0,
+            nonCompliantOps: [],
+            transportEvents: [],
+            blockchainProcessId: createBlockchainProcessId(code, Date.now()),
+            blockchainHeight: 0,
+            blockchainLastHash: ''
+        };
+    }
+
+    const spare = state.sparesData[code];
+    if (!spare.transportEvents) spare.transportEvents = [];
+
+    const timestamp = data.timestamp || data.datetime || new Date().toISOString();
+    const blockchain = createBlockchainEventMetadata(spare, type, data, timestamp);
+    const event = {
+        type,
+        timestamp,
+        ...data,
+        data,
+        blockchain
+    };
+
+    spare.transportEvents.push(event);
+    saveAll();
+    return event;
 }
 
 function generateDisposalDoc() {
     const now = new Date();
     const year = now.getFullYear();
-    const ts = now.getTime().toString().slice(-6); // 6 dígitos finais do timestamp
+    const ts = now.getTime().toString().slice(-6);
     const docNumber = `DD-${year}-${ts}-${String(state.disposalDocCounter).padStart(4, '0')}`;
-    state.disposalDocCounter++;
-    localStorage.setItem('disposalDocCounter', state.disposalDocCounter);
+    state.disposalDocCounter += 1;
+    localStorage.setItem('disposalDocCounter', String(state.disposalDocCounter));
     return docNumber;
 }
 
@@ -143,7 +337,7 @@ function clearAll() {
     localStorage.clear();
     state.spareCounter = 1;
     state.disposalDocCounter = 1;
-    state.blockchainLog = [];
+    state.currentUser = null;
     state.sparesData = {};
     state.currentContextSpare = null;
     state.nonComplianceList = [];

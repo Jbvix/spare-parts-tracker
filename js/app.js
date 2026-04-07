@@ -1,13 +1,11 @@
 /**
  * SPARES-CHAIN v6.3 — App (Bootstrap / Inicialização)
- * Carregado após: utils.js, store.js, ui.js, handlers.js, compliance.js
  */
 
-// ===== SISTEMA DE LOGIN =====
 function login() {
-    const name = document.getElementById('userName').value;
+    const name = document.getElementById('userName').value.trim();
     const role = document.getElementById('userRole').value;
-    const location = document.getElementById('userLocation').value;
+    const location = document.getElementById('userLocation').value.trim();
 
     if (!name) {
         alert('Por favor, insira seu nome completo.');
@@ -15,7 +13,9 @@ function login() {
     }
 
     state.currentUser = {
-        name, role, location,
+        name,
+        role,
+        location,
         loginTime: new Date().toISOString()
     };
 
@@ -25,16 +25,19 @@ function login() {
     document.getElementById('displayUserRole').textContent = getRoleName(role);
 
     const badge = document.getElementById('userBadge');
-    if (role === 'TRANSPORTADORA') badge.classList.add('transportadora');
+    if (badge) {
+        badge.classList.toggle('transportadora', role === 'TRANSPORTADORA');
+    }
 
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainInterface').classList.remove('hidden');
 
-    addLog(`${icon('lock')} Login realizado: ${escapeHtml(name)} (${getRoleName(role)}) - ${escapeHtml(location)}`, 'success');
+    addLog(
+        `${icon('lock')} Login realizado: ${escapeHtml(name)} (${escapeHtml(getRoleName(role))}) - ${escapeHtml(location)}`,
+        'success'
+    );
 
     initializeInterface();
-    showRoleInstructions();
-    updateDashboard();
 }
 
 function logout() {
@@ -42,27 +45,22 @@ function logout() {
     location.reload();
 }
 
-// ===== RESET =====
 function confirmReset() {
     const confirmed = confirm(
         'ATENÇÃO: RESET TOTAL DO SISTEMA\n\n' +
         'Esta ação irá:\n' +
-        'Apagar TODAS as peças\n' +
-        'Limpar histórico blockchain\n' +
-        'Zerar contadores\n' +
-        'Remover equipamentos instalados\n' +
-        'Limpar quarentena\n' +
-        'Apagar registros de descarte\n\n' +
-        'Esta ação é IRREVERSÍVEL!\n\n' +
-        'Deseja realmente RESETAR o sistema?'
+        'Apagar todas as peças\n' +
+        'Limpar histórico e quarentena\n' +
+        'Zerar contadores e descartes\n\n' +
+        'Esta ação é irreversível.\n\n' +
+        'Deseja continuar?'
     );
 
     if (!confirmed) return;
 
     const doubleCheck = confirm(
-        'ÚLTIMA CONFIRMAÇÃO!\n\n' +
-        'Tem CERTEZA ABSOLUTA?\n\n' +
-        'Todos os dados serão PERDIDOS PERMANENTEMENTE!'
+        'ÚLTIMA CONFIRMAÇÃO\n\n' +
+        'Tem certeza absoluta? Todos os dados serão perdidos.'
     );
 
     if (!doubleCheck) return;
@@ -71,61 +69,18 @@ function confirmReset() {
 }
 
 function resetSystem() {
-    try {
-        clearAll();
-
-        const sparesList = document.getElementById('sparesList');
-        if (sparesList) sparesList.innerHTML = '';
-
-        const blockchainLogDiv = document.getElementById('blockchainLog');
-        if (blockchainLogDiv) blockchainLogDiv.innerHTML = '<p style="color: #aaa;">Nenhum evento registrado</p>';
-
-        document.querySelectorAll('.equipment-slot').forEach(slot => {
-            slot.classList.remove('filled');
-            const contents = slot.querySelectorAll('[id^="equip"]');
-            contents.forEach(c => c.innerHTML = '');
-        });
-
-        document.querySelectorAll('.shelf-slot').forEach(slot => {
-            slot.classList.remove('occupied');
-            const divs = slot.querySelectorAll('div');
-            if (divs.length > 1) divs[1].innerHTML = '';
-        });
-
-        const transportCollect = document.getElementById('transportCollect');
-        if (transportCollect) transportCollect.innerHTML = '<p>Arraste peças ESCANEADAS aqui para coleta</p>';
-
-        const transportDeliver = document.getElementById('transportDeliver');
-        if (transportDeliver) transportDeliver.innerHTML = '<p>Arraste peças coletadas aqui para entrega a bordo</p>';
-
-        const quarantineList = document.getElementById('quarantineList');
-        if (quarantineList) quarantineList.innerHTML = '';
-
-        updateDashboard();
-
-        addLog(`${icon('refresh')} SISTEMA RESETADO | Todos os dados apagados`, 'danger');
-
-        alert(
-            'RESET CONCLUÍDO!\n\n' +
-            'Sistema reiniciado com sucesso.\n' +
-            'Todos os dados foram apagados.\n\n' +
-            'Você pode começar do zero!'
-        );
-
-        setTimeout(() => location.reload(), 1000);
-    } catch (e) {
-        console.error('Erro ao resetar:', e);
-        alert('ERRO ao resetar!\n\n' + e.message);
-    }
+    clearAll();
+    alert('RESET CONCLUÍDO!\n\nO sistema foi limpo e será reiniciado.');
+    location.reload();
 }
 
-// ===== INICIALIZAÇÃO DA INTERFACE =====
 function initializeInterface() {
     const panelsGrid = document.getElementById('panelsGrid');
+    if (!panelsGrid || !state.currentUser) return;
+
     panelsGrid.innerHTML = '';
 
     const role = state.currentUser.role;
-
     panelsGrid.appendChild(createScannerPanel());
 
     if (role === 'ALMOX') {
@@ -136,7 +91,7 @@ function initializeInterface() {
         panelsGrid.appendChild(createTransportadoraDeliverPanel());
         panelsGrid.appendChild(createQuarantinePanel());
     } else if (role === 'CHEFE_MAQ') {
-        panelsGrid.appendChild(createTransportadoraCollectPanel()); // Chefe pode enviar peças para transportadora
+        panelsGrid.appendChild(createInTransitPanel());
         panelsGrid.appendChild(createBordoPanel());
         panelsGrid.appendChild(createEquipmentPanel());
         panelsGrid.appendChild(createShelfPanel());
@@ -147,149 +102,75 @@ function initializeInterface() {
         panelsGrid.appendChild(createTransportadoraDeliverPanel());
         panelsGrid.appendChild(createBordoPanel());
         panelsGrid.appendChild(createEquipmentPanel());
+        panelsGrid.appendChild(createShelfPanel());
         panelsGrid.appendChild(createQuarantinePanel());
     }
 
     initializeSpares();
+    showRoleInstructions();
+    updateDashboard();
 }
 
-// ===== EVENT LISTENERS =====
-window.addEventListener('load', function () {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        state.currentUser = JSON.parse(savedUser);
-        document.getElementById('userName').value = state.currentUser.name;
-        document.getElementById('userRole').value = state.currentUser.role;
-        document.getElementById('userLocation').value = state.currentUser.location || '';
-        login();
+function showRoleSwitchModal() {
+    const modal = document.getElementById('roleSwitchModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeRoleSwitchModal() {
+    const modal = document.getElementById('roleSwitchModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchRole(newRole) {
+    const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!user) return;
+
+    user.role = newRole;
+    state.currentUser = user;
+    localStorage.setItem('currentUser', JSON.stringify(user));
+
+    const displayRole = document.getElementById('displayUserRole');
+    if (displayRole) displayRole.textContent = getRoleName(newRole);
+
+    const badge = document.getElementById('userBadge');
+    if (badge) {
+        badge.classList.toggle('transportadora', newRole === 'TRANSPORTADORA');
     }
-});
+
+    closeRoleSwitchModal();
+    initializeInterface();
+
+    addLog(`${icon('refresh')} Troca de tela: ${escapeHtml(getRoleName(newRole))}`, 'info');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     checkFirstVisit();
+
+    const savedUser = localStorage.getItem('currentUser');
+    if (!savedUser) return;
+
+    try {
+        const user = JSON.parse(savedUser);
+        state.currentUser = user;
+        document.getElementById('userName').value = user.name || '';
+        document.getElementById('userRole').value = user.role || 'CHEFE_MAQ';
+        document.getElementById('userLocation').value = user.location || '';
+        login();
+    } catch (error) {
+        console.error('Erro ao restaurar sessão:', error);
+    }
 });
 
-document.addEventListener('click', function (event) {
+document.addEventListener('click', (event) => {
     if (!event.target.closest('#contextMenu') && !event.target.closest('.spare-item')) {
         closeContextMenu();
     }
 });
 
-document.addEventListener('dragover', function (e) {
-    const dropZones = document.querySelectorAll('.drop-zone, .equipment-slot, .shelf-slot');
-    dropZones.forEach(zone => {
-        if (e.target !== zone && !zone.contains(e.target)) {
+document.addEventListener('dragover', (event) => {
+    document.querySelectorAll('.drop-zone, .equipment-slot, .shelf-slot').forEach((zone) => {
+        if (event.target !== zone && !zone.contains(event.target)) {
             zone.classList.remove('drag-over');
         }
     });
 });
-
-// Modal de troca de tela
-function showRoleSwitchModal() {
-    document.getElementById('roleSwitchModal').style.display = 'flex';
-}
-function closeRoleSwitchModal() {
-    document.getElementById('roleSwitchModal').style.display = 'none';
-}
-
-// Troca de papel sem sair para tela de login
-function switchRole(newRole) {
-    // Mantém nome e localização atuais
-    const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser'));
-    if (!user) return;
-    user.role = newRole;
-    state.currentUser = user;
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    document.getElementById('displayUserRole').textContent = getRoleName(newRole);
-    closeRoleSwitchModal();
-    initializeInterface();
-    showRoleInstructions();
-    updateDashboard();
-    addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
-    // Repopula painel de trânsito se Chefe de Máquinas
-    if (newRole === 'CHEFE_MAQ') {
-        repopulateInTransitForBordoRobusto();
-    }
-}
-
-// Carrega todos os dados do localStorage
-function loadAll() {
-    const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser'));
-    if (!user) return;
-    document.getElementById('userName').value = user.name;
-    document.getElementById('userRole').value = user.role;
-    document.getElementById('userLocation').value = user.location || '';
-    login();
-}
-
-// Repopulação robusta: só executa quando o painel existir
-function repopulateInTransitForBordoRobusto(tentativas = 0) {
-    const inTransitPanel = document.getElementById('inTransitForBordo');
-    if (inTransitPanel) {
-        inTransitPanel.innerHTML = '';
-        if (state.sparesData) {
-            Object.values(state.sparesData).forEach(spare => {
-                if (spare.currentState === 'EM_TRANSITO') {
-                    recreateSpareElement(spare);
-                }
-            });
-        }
-    } else if (tentativas < 10) {
-        setTimeout(() => repopulateInTransitForBordoRobusto(tentativas + 1), 100);
-    } else {
-        console.warn('Painel Peças em Trânsito não encontrado após várias tentativas!');
-    }
-}
-
-// Cria painel de trânsito se houver peças em trânsito ao trocar para Chefe de Máquinas
-function ensureAndPopulateInTransitPanel() {
-    if (!state.sparesData) return;
-    const emTransito = Object.values(state.sparesData).filter(spare => spare.currentState === 'EM_TRANSITO');
-    if (emTransito.length === 0) return; // Não cria painel se não houver peças
-    let panel = document.getElementById('inTransitForBordo');
-    if (!panel) {
-        const panelsGrid = document.getElementById('panelsGrid');
-        if (panelsGrid) {
-            const transitPanel = document.createElement('div');
-            transitPanel.className = 'panel';
-            transitPanel.innerHTML = `
-                <div class="panel-header" style="border-bottom-color: #ffa502;">
-                    <span class="panel-icon">${icon('truck')}</span>
-                    <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>
-                </div>
-                <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-                    Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.
-                </p>
-                <div id="inTransitForBordo" style="min-height: 40px;"></div>
-            `;
-            panelsGrid.insertBefore(transitPanel, panelsGrid.firstChild.nextSibling);
-            panel = transitPanel.querySelector('#inTransitForBordo');
-        }
-    }
-    if (panel) {
-        panel.innerHTML = '';
-        emTransito.forEach(spare => recreateSpareElement(spare));
-    }
-}
-
-// Substitui chamada anterior por esta robusta
-if (typeof switchRole === 'function') {
-    const originalSwitchRole = switchRole;
-    window.switchRole = function(newRole) {
-        loadAll();
-        const user = state.currentUser || JSON.parse(localStorage.getItem('currentUser'));
-        if (!user) return;
-        user.role = newRole;
-        state.currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        document.getElementById('displayUserRole').textContent = getRoleName(newRole);
-        closeRoleSwitchModal();
-        initializeInterface();
-        showRoleInstructions();
-        updateDashboard();
-        addLog(`${icon('refresh')} Troca de tela: ${getRoleName(newRole)}`, 'info');
-        if (newRole === 'CHEFE_MAQ') {
-            setTimeout(ensureAndPopulateInTransitPanel, 200);
-        }
-    };
-}
