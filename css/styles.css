@@ -55,6 +55,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
     border-bottom: 3px solid #00d4ff;
     backdrop-filter: blur(10px);
 }
@@ -64,12 +66,15 @@ body {
     font-weight: bold;
     color: #00d4ff;
     text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    flex: 1 1 420px;
 }
 
 .user-info {
     display: flex;
     align-items: center;
     gap: 15px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .user-badge {
@@ -83,6 +88,86 @@ body {
 .user-badge.transportadora {
     border-color: #ffa502;
     background: rgba(255, 165, 2, 0.2);
+}
+
+.user-badge.almox {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.user-badge.chefe-maq {
+    border-color: #00ff88;
+    background: rgba(0, 255, 136, 0.16);
+}
+
+.user-badge.auditor {
+    border-color: #ff6b81;
+    background: rgba(255, 107, 129, 0.18);
+}
+
+.actor-switcher {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-radius: 18px;
+    background: rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(49, 208, 255, 0.18);
+}
+
+.actor-switcher-label {
+    color: #cfe9ff;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.actor-switcher-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.actor-role-btn {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #eef7ff;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.actor-role-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(49, 208, 255, 0.35);
+}
+
+.actor-role-btn.active {
+    box-shadow: 0 0 0 3px rgba(49, 208, 255, 0.12);
+}
+
+.actor-role-btn[data-role="ALMOX"].active {
+    background: rgba(0, 212, 255, 0.16);
+    border-color: #00d4ff;
+}
+
+.actor-role-btn[data-role="TRANSPORTADORA"].active {
+    background: rgba(255, 165, 2, 0.18);
+    border-color: #ffa502;
+}
+
+.actor-role-btn[data-role="CHEFE_MAQ"].active {
+    background: rgba(0, 255, 136, 0.16);
+    border-color: #00ff88;
+}
+
+.actor-role-btn[data-role="AUDITOR"].active {
+    background: rgba(255, 107, 129, 0.18);
+    border-color: #ff6b81;
 }
 
 .logout-btn {
@@ -99,6 +184,14 @@ body {
 .logout-btn:hover {
     background: #ff3838;
     transform: scale(1.05);
+}
+
+.actor-login-trigger {
+    background: linear-gradient(135deg, #31d0ff 0%, #1e88ff 100%);
+}
+
+.actor-login-trigger:hover {
+    background: linear-gradient(135deg, #2bbcf2 0%, #146fe2 100%);
 }
 
 /* ===== CONTAINER PRINCIPAL ===== */
@@ -438,6 +531,28 @@ body {
     color: white;
     cursor: pointer;
     font-weight: bold;
+}
+
+.actor-login-modal {
+    max-width: 520px;
+}
+
+.actor-login-intro {
+    color: #c3d2e6;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.actor-login-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.actor-login-submit {
+    width: auto;
+    min-width: 180px;
 }
 
 /* ===== TOUR DE BOAS-VINDAS ===== */
@@ -1048,6 +1163,9 @@ body {
     .dashboard   { grid-template-columns: repeat(2, 1fr); }
     .spare-item  { padding: 10px; font-size: 12px; }
     .spare-icon  { font-size: 30px; }
+    .user-info {
+        justify-content: flex-start;
+    }
     .welcome-hero,
     .welcome-footer {
         flex-direction: column;
@@ -1066,6 +1184,18 @@ body {
 @media (max-width: 480px) {
     .shelf-grid { grid-template-columns: 1fr; }
     .dashboard  { grid-template-columns: 1fr; }
+    .actor-switcher,
+    .actor-login-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .actor-switcher-buttons {
+        width: 100%;
+    }
+    .actor-role-btn {
+        flex: 1 1 calc(50% - 8px);
+        text-align: center;
+    }
     .welcome-modal-content {
         padding: 18px;
     }

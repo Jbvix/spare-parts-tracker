@@ -875,6 +875,45 @@
         </div>
     </div>
 
+    <div id="actorLoginModal" class="modal">
+        <div class="modal-content actor-login-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Assumir Próxima Etapa</h2>
+                <button class="modal-close" onclick="closeActorLoginModal()">✕</button>
+            </div>
+            <p class="actor-login-intro">
+                O próximo responsável faz o login aqui sem sair do aplicativo. Assim, a operação continua
+                no mesmo fluxo e o rastreio não é perdido.
+            </p>
+            <form id="actorLoginForm" onsubmit="submitActorLogin(event)">
+                <div class="form-group">
+                    <label for="actorLoginName">Nome do Responsável</label>
+                    <input type="text" id="actorLoginName" placeholder="Ex: João Silva" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="actorRole">Ator do Processo</label>
+                    <select id="actorRole" required>
+                        <option value="CHEFE_MAQ">Chefe de Máquinas</option>
+                        <option value="ALMOX">Almoxarife</option>
+                        <option value="TRANSPORTADORA">Transportadora</option>
+                        <option value="AUDITOR">Auditor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="actorLoginLocation">Local / Empresa</label>
+                    <input type="text" id="actorLoginLocation" placeholder="Ex: Rebocador Mar Bravo, Translog">
+                </div>
+
+                <div class="actor-login-actions">
+                    <button type="button" class="welcome-nav-btn" onclick="closeActorLoginModal()">Cancelar</button>
+                    <button type="submit" class="login-btn actor-login-submit">Assumir Etapa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Menu de Contexto -->
     <div id="contextMenu" class="context-menu">
         <!-- Será preenchido dinamicamente -->
@@ -1141,12 +1180,21 @@
         <div class="header">
             <div class="logo">⚓ SPARES-CHAIN v6.3 | Rastreabilidade + Logística Reversa | Jossian Brito </div>
             <div class="user-info">
+                <div class="actor-switcher">
+                    <span class="actor-switcher-label">Selecionar ator:</span>
+                    <div class="actor-switcher-buttons">
+                        <button type="button" id="roleQuickALMOX" class="actor-role-btn" data-role="ALMOX" onclick="openActorLoginModal('ALMOX')">Almox</button>
+                        <button type="button" id="roleQuickTRANSPORTADORA" class="actor-role-btn" data-role="TRANSPORTADORA" onclick="openActorLoginModal('TRANSPORTADORA')">Transportadora</button>
+                        <button type="button" id="roleQuickCHEFE_MAQ" class="actor-role-btn" data-role="CHEFE_MAQ" onclick="openActorLoginModal('CHEFE_MAQ')">Chefe</button>
+                        <button type="button" id="roleQuickAUDITOR" class="actor-role-btn" data-role="AUDITOR" onclick="openActorLoginModal('AUDITOR')">Auditor</button>
+                    </div>
+                </div>
                 <button class="logout-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%); margin-right: 10px;" onclick="showComplianceAnalysis()">⚠️ Conformidade</button>
                 <button class="logout-btn" style="background: linear-gradient(135deg, #ff4757 0%, #c23616 100%); margin-right: 10px;" onclick="confirmReset()">🔄 RESET</button>
                 <div class="user-badge" id="userBadge">
                     <span id="displayUserName"></span> | <span id="displayUserRole"></span>
                 </div>
-                <button class="logout-btn" onclick="logout()">Sair</button>
+                <button class="logout-btn actor-login-trigger" onclick="openActorLoginModal()">Trocar Responsável</button>
             </div>
         </div>
 
