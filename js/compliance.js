@@ -337,14 +337,77 @@ function showDisposalDocument(docNumber, items) {
 }
 
 // ===== BOAS-VINDAS =====
+let welcomeSlideIndex = 0;
+
+function getWelcomeSlides() {
+    return Array.from(document.querySelectorAll('.welcome-slide'));
+}
+
+function updateWelcomeCarousel() {
+    const slides = getWelcomeSlides();
+    if (!slides.length) return;
+
+    const safeIndex = Math.min(Math.max(welcomeSlideIndex, 0), slides.length - 1);
+    welcomeSlideIndex = safeIndex;
+
+    slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === safeIndex);
+    });
+
+    slides.forEach((_, index) => {
+        const dot = document.getElementById(`welcomeDot${index}`);
+        if (dot) dot.classList.toggle('active', index === safeIndex);
+    });
+
+    const counter = document.getElementById('welcomeStepLabel');
+    if (counter) {
+        counter.textContent = `Card ${safeIndex + 1} de ${slides.length}`;
+    }
+
+    const prevBtn = document.getElementById('welcomePrevBtn');
+    if (prevBtn) prevBtn.disabled = safeIndex === 0;
+
+    const nextBtn = document.getElementById('welcomeNextBtn');
+    if (nextBtn) nextBtn.classList.toggle('hidden', safeIndex === slides.length - 1);
+}
+
+function initializeWelcomeCarousel() {
+    welcomeSlideIndex = 0;
+    updateWelcomeCarousel();
+}
+
+function goToWelcomeSlide(index) {
+    welcomeSlideIndex = index;
+    updateWelcomeCarousel();
+}
+
+function nextWelcomeSlide() {
+    const slides = getWelcomeSlides();
+    if (!slides.length) return;
+
+    if (welcomeSlideIndex < slides.length - 1) {
+        welcomeSlideIndex += 1;
+        updateWelcomeCarousel();
+    }
+}
+
+function previousWelcomeSlide() {
+    if (welcomeSlideIndex > 0) {
+        welcomeSlideIndex -= 1;
+        updateWelcomeCarousel();
+    }
+}
+
 function closeWelcomeModal() {
     document.getElementById('welcomeModal').classList.remove('active');
     localStorage.setItem('welcomeShown', 'true');
+    welcomeSlideIndex = 0;
 }
 
 function checkFirstVisit() {
-    const welcomeShown = localStorage.getItem('welcomeShown');
-    if (!welcomeShown) {
-        document.getElementById('welcomeModal').classList.add('active');
-    }
+    const modal = document.getElementById('welcomeModal');
+    if (!modal) return;
+
+    modal.classList.add('active');
+    initializeWelcomeCarousel();
 }

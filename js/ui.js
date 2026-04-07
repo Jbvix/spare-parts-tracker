@@ -156,9 +156,9 @@ function createBordoPanel() {
             <span class="panel-title">RECEBIMENTO A BORDO</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            Peças entregues pela transportadora aguardando conferência, armazenamento ou instalação.
+            Peças em trânsito devem ser escaneadas para entrar no bordo. Depois, escaneie novamente antes de armazenar.
         </p>
-        <div id="bordo" class="drop-zone">
+        <div id="bordo" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
             <p>${icon('package')} ESTOQUE DE BORDO</p>
             <div id="bordoList" style="margin-top: 15px; width: 100%;"></div>
         </div>
@@ -255,7 +255,7 @@ function createInTransitPanel() {
             <span class="panel-title" style="color: #ffa502;">PEÇAS EM TRÂNSITO</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            Peças coletadas pela transportadora e a caminho do bordo. Aguarde entrega.
+            Peças entregues pela transportadora aguardando conferência. Escaneie e mova para o recebimento a bordo.
         </p>
         <div id="inTransitForBordo" style="min-height: 40px;"></div>
     `;
@@ -316,8 +316,8 @@ function showRoleInstructions() {
             instructions = `
                 <h3 style="color: #00d4ff; margin-bottom: 10px;">${icon('fileText')} Fluxo CHEFE DE MÁQUINAS</h3>
                 <ol style="line-height: 2;">
-                    <li><strong>Receber:</strong> confira as peças entregues a bordo.</li>
-                    <li><strong>Armazenar:</strong> organize nas prateleiras do bordo.</li>
+                    <li><strong>Receber:</strong> escaneie a peça em trânsito e mova para recebimento a bordo.</li>
+                    <li><strong>Armazenar:</strong> escaneie novamente e organize nas prateleiras do bordo.</li>
                     <li><strong>Instalar:</strong> escaneie antes de instalar no equipamento.</li>
                     <li><strong>Remover:</strong> direcione para quarentena, reaproveitamento ou não conforme.</li>
                 </ol>

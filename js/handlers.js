@@ -81,6 +81,8 @@ function drop(event) {
         handleTransportCollect(draggedElement, name, code, currentState);
     } else if (dropZone.id === 'transportDeliver') {
         handleTransportDeliver(draggedElement, name, code, currentState);
+    } else if (dropZone.id === 'bordo') {
+        handleBordoReceipt(draggedElement, name, code, currentState);
     } else if (dropZone.id === 'quarantine') {
         handleQuarantineDrop(draggedElement, name, code, currentState);
     } else if (dropZone.classList.contains('equipment-slot')) {
@@ -238,6 +240,55 @@ function handleTransportDeliver(element, name, code, currentState) {
     addLog(
         `${icon('package')} ENTREGUE A BORDO: ${escapeHtml(name)} por ${escapeHtml(state.currentUser.name)}${formatBlockchainTag(blockchainEvent)}`,
         'success'
+    );
+
+    saveAll();
+    updateDashboard();
+}
+
+function handleBordoReceipt(element, name, code, currentState) {
+    if (state.currentUser?.role !== 'CHEFE_MAQ') {
+        alert('ACESSO NEGADO\n\nApenas CHEFE DE MÁQUINAS pode receber peças a bordo.');
+        return;
+    }
+
+    if (currentState !== 'EM_TRANSITO') {
+        alert('ATENÇÃO\n\nSomente peças em trânsito podem entrar no recebimento a bordo.');
+        return;
+    }
+
+    if (!wasRecentlyScanned(element)) {
+        alert('ATENÇÃO\n\nEscaneie a peça em trânsito antes de registrar o recebimento a bordo.');
+        return;
+    }
+
+    element.dataset.state = 'ENTREGUE_BORDO';
+    delete element.dataset.transportadora;
+    delete element.dataset.lastScan;
+    element.classList.remove('in-transit');
+    updateSpareStatus(element);
+    placeSpareElement(element);
+
+    const operator = state.currentUser?.name || 'Operador';
+    const blockchainEvent = addSpareEvent(code, 'ENTREGUE_BORDO', {
+        operator,
+        location: 'RECEBIMENTO_BORDO',
+        receivedBy: operator,
+        scanned: true,
+        previousState: currentState
+    });
+
+    delete state.sparesData[code].lastScan;
+    delete state.sparesData[code].transportadora;
+
+    addLog(
+        `${icon('ship')} RECEBIDO A BORDO: ${escapeHtml(name)} conferido por ${escapeHtml(operator)}${formatBlockchainTag(blockchainEvent)}`,
+        'success'
+    );
+
+    addLog(
+        `${icon('qrCode')} NOVO ESCANEAMENTO EXIGIDO: ${escapeHtml(name)} deve ser escaneada novamente antes de ir para prateleira ou instalação.`,
+        'info'
     );
 
     saveAll();
@@ -465,6 +516,11 @@ function handleShelfStorage(element, shelfSlot, name, code, currentState) {
 
     if (!['ENTREGUE_BORDO', 'ARMAZENADO', 'NAO_CONFORME'].includes(currentState)) {
         alert('ATENÇÃO\n\nApenas peças disponíveis a bordo ou já armazenadas podem ir para a prateleira.');
+        return;
+    }
+
+    if (currentState === 'ENTREGUE_BORDO' && !wasRecentlyScanned(element)) {
+        alert('ATENÇÃO\n\nEscaneie novamente a peça no recebimento a bordo antes de armazenar na prateleira.');
         return;
     }
 

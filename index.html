@@ -920,71 +920,217 @@
     </div>
 
     <!-- Modal de Boas-Vindas -->
-    <div id="welcomeModal" class="modal active">
-        <div class="modal-content" style="max-width: 900px;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #00a3ff 5%, #094e3 100%);">
-                <h2 class="modal-title">⚓ Bem-vindo ao SPARES-CHAIN v6.3</h2>
-                <button class="modal-close" onclick="closeWelcomeModal()">✕</button>
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content welcome-modal-content">
+            <div class="welcome-hero">
+                <div>
+                    <p class="welcome-kicker">SPARES-CHAIN v6.3</p>
+                    <h2 class="modal-title welcome-title">Rastreio blockchain de ponta a ponta</h2>
+                    <p class="welcome-subtitle">
+                        Um tour em cards para mostrar como cada movimentação vira evidência auditável
+                        antes do usuário entrar no sistema.
+                    </p>
+                </div>
+                <div class="welcome-counter">
+                    <span id="welcomeStepLabel">Card 1 de 6</span>
+                </div>
             </div>
-            <div style="padding: 30px;">
-                <h3 style="color: #00d4ff; margin-bottom: 20px;">🎯 Sistema Completo de Rastreabilidade</h3>
-                
-                <div style="background: rgba(0, 212, 255, 0.1); border-left: 4px solid #00d4ff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-                    <strong>Atualizações recentes:</strong><br>
-                    ✅ Peças removidas vão DIRETO para quarentena<br>
-                    ✅ Botão RESET para limpar sistema<br>
-                    ✅ Tutorial interativo de boas-vindas
-                </div>
-                
-                <h4 style="color: #ffa502; margin: 20px 0 10px 0;">🔄 FLUXO COMPLETO (7 Etapas):</h4>
-                <ol style="line-height: 2; color: #ddd;">
-                    <li><strong>RECEBIDA</strong> → Almoxarifado gera QR Code</li>
-                    <li><strong>COLETADA</strong> → Transportadora coleta peça</li>
-                    <li><strong>ENTREGUE</strong> → Bordo recebe peça</li>
-                    <li><strong>INSTALADA</strong> → Chefe instala no motor</li>
-                    <li><strong>REMOVIDA</strong> → Peça vai DIRETO para quarentena 🆕</li>
-                    <li><strong>COLETADA</strong> → Transportadora executa logística reversa</li>
-                    <li><strong>DESCARTADA</strong> → Documento DD-XXXX gerado</li>
-                </ol>
-                
-                <h4 style="color: #ffa502; margin: 20px 0 10px 0;">👥 PAPÉIS NO SISTEMA:</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border-left: 4px solid #00d4ff;">
-                        <strong>🏭 ALMOXARIFADO</strong><br>
-                        <small>Recebe e registra peças</small>
+
+            <div class="welcome-dots" role="tablist" aria-label="Etapas do rastreio blockchain">
+                <button id="welcomeDot0" class="welcome-dot active" onclick="goToWelcomeSlide(0)" aria-label="Ir para card 1"></button>
+                <button id="welcomeDot1" class="welcome-dot" onclick="goToWelcomeSlide(1)" aria-label="Ir para card 2"></button>
+                <button id="welcomeDot2" class="welcome-dot" onclick="goToWelcomeSlide(2)" aria-label="Ir para card 3"></button>
+                <button id="welcomeDot3" class="welcome-dot" onclick="goToWelcomeSlide(3)" aria-label="Ir para card 4"></button>
+                <button id="welcomeDot4" class="welcome-dot" onclick="goToWelcomeSlide(4)" aria-label="Ir para card 5"></button>
+                <button id="welcomeDot5" class="welcome-dot" onclick="goToWelcomeSlide(5)" aria-label="Ir para card 6"></button>
+            </div>
+
+            <div class="welcome-carousel">
+                <section class="welcome-slide active" data-step-title="Origem do Processo">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 1</span>
+                        <h3>Toda peça nasce com uma identidade de processo</h3>
+                        <p>
+                            Ao entrar na cadeia, o sobressalente recebe um <strong>Process ID blockchain</strong>.
+                            A partir desse ponto, cada nova etapa gera um bloco encadeado com referência ao bloco anterior.
+                        </p>
+                        <div class="welcome-chip-row">
+                            <span class="welcome-chip">Process ID</span>
+                            <span class="welcome-chip">Block ID</span>
+                            <span class="welcome-chip">Tx ID</span>
+                            <span class="welcome-chip">Prev Hash</span>
+                            <span class="welcome-chip">Hash</span>
+                        </div>
                     </div>
-                    <div style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border-left: 4px solid #ffa502;">
-                        <strong>🚚 TRANSPORTADORA</strong><br>
-                        <small>Logística normal e reversa</small>
+                    <div class="welcome-visual">
+                        <div class="welcome-ledger-card">
+                            <div class="welcome-ledger-label">Bloco Gênese</div>
+                            <strong>RECEBIDO</strong>
+                            <small>BC-SP-2026-001-A12F</small>
+                            <small>Prev: GENESIS</small>
+                        </div>
+                        <div class="welcome-ledger-arrow">→</div>
+                        <div class="welcome-ledger-card accent">
+                            <div class="welcome-ledger-label">Próximo Evento</div>
+                            <strong>ESCANEADO</strong>
+                            <small>BLK-0002</small>
+                            <small>Tx: TX-9F31C4</small>
+                        </div>
                     </div>
-                    <div style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border-left: 4px solid #2ecc71;">
-                        <strong>⚙️ CHEFE DE MÁQUINAS</strong><br>
-                        <small>Instala e remove peças</small>
+                </section>
+
+                <section class="welcome-slide" data-step-title="Recebimento no Almoxarifado">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 2</span>
+                        <h3>O almoxarifado cria o primeiro registro confiável</h3>
+                        <p>
+                            A peça é recebida, identificada e associada ao QR Code. Esse evento fixa a origem
+                            do material e abre a trilha auditável do processo.
+                        </p>
+                        <ul class="welcome-list">
+                            <li>Registro de entrada do sobressalente.</li>
+                            <li>Identificação do operador responsável.</li>
+                            <li>Primeiro hash do histórico imutável.</li>
+                        </ul>
                     </div>
-                    <div style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c;">
-                        <strong>🔍 AUDITOR</strong><br>
-                        <small>Fiscaliza conformidade</small>
+                    <div class="welcome-visual">
+                        <div class="welcome-stage-card">
+                            <span>ALMOXARIFADO</span>
+                            <strong>Recebe</strong>
+                            <small>Evento: RECEBIDO</small>
+                        </div>
+                        <div class="welcome-stage-card secondary">
+                            <span>SCANNER</span>
+                            <strong>Valida</strong>
+                            <small>Evento: ESCANEADO</small>
+                        </div>
                     </div>
-                </div>
-                
-                <h4 style="color: #ff4757; margin: 20px 0 10px 0;">📱 RECURSOS PRINCIPAIS:</h4>
-                <ul style="line-height: 2; color: #ddd;">
-                    <li>📸 <strong>QR Code + Blockchain</strong> imutável</li>
-                    <li>🔗 <strong>Cadeia de custódia</strong> tripla</li>
-                    <li>📊 <strong>Dashboard</strong> em tempo real</li>
-                    <li>🗑️ <strong>Quarentena</strong> + Logística reversa</li>
-                    <li>📄 <strong>Documento DD-XXXX</strong> automático</li>
-                    <li>⚠️ <strong>Análise de conformidade</strong></li>
-                    <li>🔄 <strong>Reset total</strong> do sistema</li>
-                </ul>
-                
-                <div style="margin-top: 30px; padding: 20px; background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 8px; text-align: center;">
-                    <strong style="color: #2ecc71; font-size: 18px;">🚀 Pronto para começar?</strong><br>
-                    <p style="margin: 15px 0; color: #aaa;">Faça login e explore o sistema completo de rastreabilidade!</p>
-                    <button class="logout-btn" onclick="closeWelcomeModal()" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); padding: 15px 40px; font-size: 16px;">
-                        ✅ COMEÇAR
-                    </button>
-                </div>
+                </section>
+
+                <section class="welcome-slide" data-step-title="Saída e Transporte">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 3</span>
+                        <h3>A transportadora assume a cadeia de custódia</h3>
+                        <p>
+                            Quando a peça sai do almoxarifado, a coleta e o transporte registram
+                            quem levou, quando levou e em qual condição a peça seguiu para bordo.
+                        </p>
+                        <ul class="welcome-list">
+                            <li>Saída registrada pelo almoxarifado.</li>
+                            <li>Coleta associada à transportadora.</li>
+                            <li>Estado operacional muda para <strong>EM_TRÂNSITO</strong>.</li>
+                        </ul>
+                    </div>
+                    <div class="welcome-visual">
+                        <div class="welcome-chain-strip">
+                            <div class="welcome-chain-node">Saída</div>
+                            <div class="welcome-chain-link"></div>
+                            <div class="welcome-chain-node active">Coleta</div>
+                            <div class="welcome-chain-link"></div>
+                            <div class="welcome-chain-node">Trânsito</div>
+                        </div>
+                        <div class="welcome-proof-box">
+                            <small>Block: BLK-0004</small>
+                            <small>Tx: COLETA_TRANSPORTADORA</small>
+                            <small>Operador, empresa e data gravados</small>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="welcome-slide" data-step-title="Recebimento a Bordo">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 4</span>
+                        <h3>No bordo, a conferência exige novo escaneamento</h3>
+                        <p>
+                            O chefe de máquinas só recebe a peça se ela vier do trânsito e passar por um novo scan.
+                            Esse registro fecha a transferência entre terra e embarcação.
+                        </p>
+                        <ul class="welcome-list">
+                            <li>Escaneamento antes de entrar em <strong>RECEBIMENTO A BORDO</strong>.</li>
+                            <li>Segundo escaneamento antes de armazenar em prateleira.</li>
+                            <li>Histórico preserva cada passagem sem sobrescrever o bloco anterior.</li>
+                        </ul>
+                    </div>
+                    <div class="welcome-visual">
+                        <div class="welcome-stage-stack">
+                            <div class="welcome-stage-card warning">
+                                <span>EM_TRÂNSITO</span>
+                                <strong>Chega ao bordo</strong>
+                            </div>
+                            <div class="welcome-stage-card accent">
+                                <span>ENTREGUE_BORDO</span>
+                                <strong>Recebida e conferida</strong>
+                            </div>
+                            <div class="welcome-stage-card success">
+                                <span>ARMAZENADO</span>
+                                <strong>Pronta para uso</strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="welcome-slide" data-step-title="Uso, Remoção e Quarentena">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 5</span>
+                        <h3>A blockchain acompanha a vida útil até o descarte</h3>
+                        <p>
+                            Instalação, remoção, quarentena, não conformidade e logística reversa
+                            continuam no mesmo processo, mantendo a peça rastreável até o fim.
+                        </p>
+                        <ul class="welcome-list">
+                            <li>Instalação vinculada ao equipamento e às horas.</li>
+                            <li>Remoção gera destino: prateleira, quarentena ou não conforme.</li>
+                            <li>Descarte final emite documento auditável.</li>
+                        </ul>
+                    </div>
+                    <div class="welcome-visual">
+                        <div class="welcome-timeline-card">
+                            <div>INSTALADO</div>
+                            <div>REMOVIDO</div>
+                            <div>QUARENTENA</div>
+                            <div>DESCARTADO_FINAL</div>
+                        </div>
+                        <div class="welcome-proof-box danger">
+                            <small>Documento DD + blockchain</small>
+                            <small>Sem lacunas na cadeia de custódia</small>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="welcome-slide" data-step-title="Auditoria e Início">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 6</span>
+                        <h3>Auditoria pronta para consulta em tempo real</h3>
+                        <p>
+                            No histórico de cada peça, você enxerga o processo completo com
+                            <strong>Process ID, Block ID, Tx ID, previous hash e hash atual</strong>.
+                            Isso permite provar origem, transferência, instalação e destino final sem depender de memória humana.
+                        </p>
+                        <div class="welcome-chip-row">
+                            <span class="welcome-chip">Histórico completo</span>
+                            <span class="welcome-chip">Conformidade</span>
+                            <span class="welcome-chip">Cadeia de custódia</span>
+                            <span class="welcome-chip">Auditoria imediata</span>
+                        </div>
+                    </div>
+                    <div class="welcome-visual">
+                        <div class="welcome-start-card">
+                            <strong>O fluxo está pronto.</strong>
+                            <p>
+                                Entre no sistema e acompanhe a peça desde o almoxarifado
+                                até a operação, quarentena ou descarte final.
+                            </p>
+                            <button id="welcomeStartInline" class="welcome-start-btn" onclick="closeWelcomeModal()">
+                                Iniciar Sistema
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="welcome-footer">
+                <button id="welcomePrevBtn" class="welcome-nav-btn" onclick="previousWelcomeSlide()">Anterior</button>
+                <button id="welcomeNextBtn" class="welcome-nav-btn welcome-nav-btn-primary" onclick="nextWelcomeSlide()">Próximo</button>
             </div>
         </div>
     </div>

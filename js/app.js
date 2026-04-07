@@ -74,6 +74,16 @@ function resetSystem() {
     location.reload();
 }
 
+function resetPersistedStateOnStartup() {
+    const welcomeShown = localStorage.getItem('welcomeShown');
+
+    clearAll();
+
+    if (welcomeShown) {
+        localStorage.setItem('welcomeShown', welcomeShown);
+    }
+}
+
 function initializeInterface() {
     const panelsGrid = document.getElementById('panelsGrid');
     if (!panelsGrid || !state.currentUser) return;
@@ -144,21 +154,8 @@ function switchRole(newRole) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    resetPersistedStateOnStartup();
     checkFirstVisit();
-
-    const savedUser = localStorage.getItem('currentUser');
-    if (!savedUser) return;
-
-    try {
-        const user = JSON.parse(savedUser);
-        state.currentUser = user;
-        document.getElementById('userName').value = user.name || '';
-        document.getElementById('userRole').value = user.role || 'CHEFE_MAQ';
-        document.getElementById('userLocation').value = user.location || '';
-        login();
-    } catch (error) {
-        console.error('Erro ao restaurar sessão:', error);
-    }
 });
 
 document.addEventListener('click', (event) => {
