@@ -137,8 +137,9 @@ function handleTransportCollect(element, name, code, currentState) {
         return;
     }
 
-    if (currentState !== 'AGUARDANDO_COLETA') {
-        alert('Só é possível coletar peças com saída registrada pelo almoxarifado.');
+    const validCollectionStates = ['RECEBIDO', 'AGUARDANDO_COLETA', 'ESCANEADO'];
+    if (!validCollectionStates.includes(currentState)) {
+        alert('Só é possível coletar peças que ainda estão no fluxo do almoxarifado.');
         return;
     }
 

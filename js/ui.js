@@ -86,11 +86,11 @@ function createTransportadoraCollectPanel() {
             <span class="panel-title transportadora">COLETA (Almoxarifado)</span>
         </div>
         <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
-            Transportadora coleta peças do almoxarifado. Escaneamento recomendado antes da coleta.
+            Transportadora coleta peças liberadas no almoxarifado. Escaneamento mantém a conformidade da coleta.
         </p>
         <div id="transportCollect" class="drop-zone transportadora" ondrop="drop(event)" ondragover="allowDrop(event)">
             <p>${icon('package')} ZONA DE COLETA</p>
-            <p style="font-size: 12px; color: #ffa502;">Peças aguardando coleta autorizada</p>
+            <p style="font-size: 12px; color: #ffa502;">Peças do almoxarifado prontas para coleta</p>
         </div>
     `;
     return panel;
