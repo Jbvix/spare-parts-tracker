@@ -932,6 +932,19 @@
         </div>
     </div>
 
+    <!-- Modal de Relatório Final -->
+    <div id="finalReportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📋 Relatório Final de Avaliação do Processo</h2>
+                <button class="modal-close" onclick="closeFinalReportModal()">✕</button>
+            </div>
+            <div id="finalReportContent">
+                <!-- Será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Histórico -->
     <div id="historyModal" class="modal">
         <div class="modal-content">
@@ -966,12 +979,13 @@
                     <p class="welcome-kicker">SPARES-CHAIN v6.3</p>
                     <h2 class="modal-title welcome-title">Rastreio blockchain de ponta a ponta</h2>
                     <p class="welcome-subtitle">
-                        Um tour em cards para mostrar como cada movimentação vira evidência auditável
+                        Um tour em cards para mostrar como cada movimentação vira evidência auditável,
+                        com encadeamento linear e Merkle Tree,
                         antes do usuário entrar no sistema.
                     </p>
                 </div>
                 <div class="welcome-counter">
-                    <span id="welcomeStepLabel">Card 1 de 6</span>
+                    <span id="welcomeStepLabel">Card 1 de 7</span>
                 </div>
             </div>
 
@@ -982,6 +996,7 @@
                 <button id="welcomeDot3" class="welcome-dot" onclick="goToWelcomeSlide(3)" aria-label="Ir para card 4"></button>
                 <button id="welcomeDot4" class="welcome-dot" onclick="goToWelcomeSlide(4)" aria-label="Ir para card 5"></button>
                 <button id="welcomeDot5" class="welcome-dot" onclick="goToWelcomeSlide(5)" aria-label="Ir para card 6"></button>
+                <button id="welcomeDot6" class="welcome-dot" onclick="goToWelcomeSlide(6)" aria-label="Ir para card 7"></button>
             </div>
 
             <div class="welcome-carousel">
@@ -992,6 +1007,7 @@
                         <p>
                             Ao entrar na cadeia, o sobressalente recebe um <strong>Process ID blockchain</strong>.
                             A partir desse ponto, cada nova etapa gera um bloco encadeado com referência ao bloco anterior.
+                            Essa é a espinha dorsal linear do processo.
                         </p>
                         <div class="welcome-chip-row">
                             <span class="welcome-chip">Process ID</span>
@@ -1136,19 +1152,61 @@
                     </div>
                 </section>
 
-                <section class="welcome-slide" data-step-title="Auditoria e Início">
+                <section class="welcome-slide" data-step-title="Merkle Tree">
                     <div class="welcome-copy">
                         <span class="welcome-tag">Card 6</span>
+                        <h3>Onde entra a Merkle Tree nesse modelo</h3>
+                        <p>
+                            Além da sequência <strong>previous hash → hash</strong>, cada evento também vira uma
+                            <strong>folha Merkle</strong>. Essas folhas são combinadas em pares até gerar uma
+                            <strong>Merkle Root</strong> da peça e outra root consolidada do processo.
+                        </p>
+                        <ul class="welcome-list">
+                            <li>Cada evento gera um <strong>leaf hash</strong>.</li>
+                            <li>Os leaf hashes sobem em pares até formar a <strong>Merkle Root</strong>.</li>
+                            <li>O histórico mostra a <strong>prova de inclusão</strong> de cada evento.</li>
+                        </ul>
+                    </div>
+                    <div class="welcome-visual">
+                        <div class="welcome-stage-stack">
+                            <div class="welcome-stage-card secondary">
+                                <span>FOLHAS</span>
+                                <strong>h1 | h2 | h3 | h4</strong>
+                                <small>Hash de cada evento</small>
+                            </div>
+                            <div class="welcome-stage-card accent">
+                                <span>NÓS INTERMEDIÁRIOS</span>
+                                <strong>hash(h1+h2) | hash(h3+h4)</strong>
+                                <small>Combinação por pares</small>
+                            </div>
+                            <div class="welcome-stage-card success">
+                                <span>ROOT</span>
+                                <strong>Merkle Root</strong>
+                                <small>Selo criptográfico do conjunto</small>
+                            </div>
+                        </div>
+                        <div class="welcome-proof-box">
+                            <small>Cadeia linear prova a ordem</small>
+                            <small>Merkle Tree prova a integridade do conjunto</small>
+                            <small>As duas camadas trabalham juntas na auditoria</small>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="welcome-slide" data-step-title="Auditoria e Início">
+                    <div class="welcome-copy">
+                        <span class="welcome-tag">Card 7</span>
                         <h3>Auditoria pronta para consulta em tempo real</h3>
                         <p>
                             No histórico de cada peça, você enxerga o processo completo com
-                            <strong>Process ID, Block ID, Tx ID, previous hash e hash atual</strong>.
+                            <strong>Process ID, Block ID, Tx ID, previous hash, hash atual, Merkle Leaf, prova de inclusão e Merkle Root</strong>.
                             Isso permite provar origem, transferência, instalação e destino final sem depender de memória humana.
                         </p>
                         <div class="welcome-chip-row">
                             <span class="welcome-chip">Histórico completo</span>
                             <span class="welcome-chip">Conformidade</span>
                             <span class="welcome-chip">Cadeia de custódia</span>
+                            <span class="welcome-chip">Merkle Root</span>
                             <span class="welcome-chip">Auditoria imediata</span>
                         </div>
                     </div>
@@ -1189,6 +1247,7 @@
                         <button type="button" id="roleQuickAUDITOR" class="actor-role-btn" data-role="AUDITOR" onclick="openActorLoginModal('AUDITOR')">Auditor</button>
                     </div>
                 </div>
+                <button class="logout-btn" style="background: linear-gradient(135deg, #31d0ff 0%, #1e88ff 100%); margin-right: 10px;" onclick="showFinalProcessReport()">📋 Relatório Final</button>
                 <button class="logout-btn" style="background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%); margin-right: 10px;" onclick="showComplianceAnalysis()">⚠️ Conformidade</button>
                 <button class="logout-btn" style="background: linear-gradient(135deg, #ff4757 0%, #c23616 100%); margin-right: 10px;" onclick="confirmReset()">🔄 RESET</button>
                 <div class="user-badge" id="userBadge">

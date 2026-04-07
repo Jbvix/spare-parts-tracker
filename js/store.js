@@ -56,7 +56,17 @@ function getCanonicalState(type, data = {}, previousState = 'RECEBIDO') {
         case 'RECEBIDO':
         default:
             return type || previousState || 'RECEBIDO';
+        }
+}
+
+function hasCompleteMerkleCoverage(spare) {
+    const orderedEvents = getOrderedSpareEvents(spare);
+    if (!orderedEvents.length) {
+        return Boolean(spare?.merkle && typeof spare.merkle.root === 'string');
     }
+
+    return Boolean(spare?.merkle?.root)
+        && orderedEvents.every((event) => event?.merkle?.leafHash && Array.isArray(event?.merkle?.proof));
 }
 
 function normalizeLoadedSpare(spare) {
@@ -92,6 +102,7 @@ function normalizeLoadedSpare(spare) {
     if (spare.transportadora) normalized.transportadora = spare.transportadora;
     if (spare.shelf) normalized.shelf = spare.shelf;
     if (spare.origin) normalized.origin = spare.origin;
+    if (spare.merkle) normalized.merkle = spare.merkle;
 
     let currentState = spare.currentState || 'RECEBIDO';
     const lastEvent = normalized.history[normalized.history.length - 1];
@@ -107,7 +118,86 @@ function normalizeLoadedSpare(spare) {
     }
 
     normalized.currentState = currentState;
+    if (!hasCompleteMerkleCoverage(normalized)) {
+        rebuildSpareMerkle(normalized);
+    }
     return normalized;
+}
+
+function getOrderedSpareEvents(spare) {
+    return [
+        ...(Array.isArray(spare?.history) ? spare.history : []),
+        ...(Array.isArray(spare?.transportEvents) ? spare.transportEvents : [])
+    ].sort((left, right) => {
+        const leftBlock = Number(left?.blockchain?.blockNumber || 0);
+        const rightBlock = Number(right?.blockchain?.blockNumber || 0);
+
+        if (leftBlock && rightBlock && leftBlock !== rightBlock) {
+            return leftBlock - rightBlock;
+        }
+
+        return new Date(left?.timestamp || 0).getTime() - new Date(right?.timestamp || 0).getTime();
+    });
+}
+
+function buildEventMerkleLeafHash(spareCode, event, position = 0) {
+    return generateDeterministicHash('MERKLE_LEAF', {
+        code: spareCode || '',
+        type: event?.type || '',
+        timestamp: event?.timestamp || '',
+        data: event?.data || {},
+        blockchain: {
+            processId: event?.blockchain?.processId || '',
+            blockNumber: Number(event?.blockchain?.blockNumber || 0),
+            blockId: event?.blockchain?.blockId || '',
+            txId: event?.blockchain?.txId || '',
+            previousHash: event?.blockchain?.previousHash || '',
+            hash: event?.blockchain?.hash || ''
+        },
+        position
+    });
+}
+
+function rebuildSpareMerkle(spare) {
+    if (!spare) return null;
+
+    const orderedEvents = getOrderedSpareEvents(spare);
+    if (!orderedEvents.length) {
+        spare.merkle = {
+            root: '',
+            leafCount: 0,
+            treeHeight: 0,
+            generatedAt: new Date().toISOString(),
+            lastLeafHash: ''
+        };
+        return spare.merkle;
+    }
+
+    const leafHashes = orderedEvents.map((event, index) => buildEventMerkleLeafHash(spare.code, event, index));
+    const tree = buildMerkleTree(leafHashes);
+
+    orderedEvents.forEach((event, index) => {
+        const proof = buildMerkleProof(tree.levels, index);
+        event.merkle = {
+            leafHash: leafHashes[index],
+            root: tree.root,
+            proof,
+            proofDepth: proof.length,
+            leafIndex: index,
+            leafCount: tree.leafCount,
+            verified: verifyMerkleProof(leafHashes[index], proof, tree.root)
+        };
+    });
+
+    spare.merkle = {
+        root: tree.root,
+        leafCount: tree.leafCount,
+        treeHeight: tree.treeHeight,
+        generatedAt: new Date().toISOString(),
+        lastLeafHash: leafHashes[leafHashes.length - 1]
+    };
+
+    return spare.merkle;
 }
 
 function createBlockchainEventMetadata(spare, type, data = {}, timestamp = new Date().toISOString()) {
@@ -123,8 +213,8 @@ function createBlockchainEventMetadata(spare, type, data = {}, timestamp = new D
         previousHash,
         data
     });
-    const hash = generateHash(spare.code, type, payloadFingerprint);
-    const txId = `TX-${generateHash(spare.code, type, `${timestamp}-${blockNumber}`)}`;
+    const hash = generateDeterministicHash(spare.code, type, payloadFingerprint);
+    const txId = `TX-${generateDeterministicHash(spare.code, type, `${timestamp}-${blockNumber}`).slice(0, 12)}`;
     const blockId = `BLK-${String(blockNumber).padStart(4, '0')}`;
 
     spare.blockchainHeight = blockNumber;
@@ -284,6 +374,7 @@ function addSpareEvent(code, type, data = {}) {
         delete spare.shelf;
     }
 
+    rebuildSpareMerkle(spare);
     saveAll();
     return event;
 }
@@ -319,6 +410,7 @@ function addTransportEvent(code, type, data = {}) {
     };
 
     spare.transportEvents.push(event);
+    rebuildSpareMerkle(spare);
     saveAll();
     return event;
 }
